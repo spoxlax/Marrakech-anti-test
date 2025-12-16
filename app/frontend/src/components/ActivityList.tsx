@@ -1,5 +1,6 @@
 import React from 'react';
 import { useQuery, gql } from '@apollo/client';
+import ActivityCard, { type Activity } from './ActivityCard';
 
 const GET_ACTIVITIES = gql`
   query GetActivities {
@@ -8,30 +9,54 @@ const GET_ACTIVITIES = gql`
       title
       description
       priceAdult
+      priceChild
+      vendorId
+      duration
+      images
     }
   }
 `;
 
-const ActivityList: React.FC = () => {
-    const { loading, error, data } = useQuery(GET_ACTIVITIES);
+interface ActivityListProps {
+  limit?: number;
+  className?: string;
+  activities?: Activity[]; // Optional prop to pass generic activities
+}
 
-    if (loading) return <p>Loading...</p>;
-    if (error) return <p>Error: {error.message}</p>;
+const ActivityList: React.FC<ActivityListProps> = ({ limit, className, activities: propActivities }) => {
+  const { loading, error, data } = useQuery(GET_ACTIVITIES, {
+    skip: !!propActivities
+  });
 
-    return (
-        <div className="p-4">
-            <h2 className="text-2xl font-bold mb-4">Activities</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {data.activities.map((activity: any) => (
-                    <div key={activity.id} className="border p-4 rounded shadow">
-                        <h3 className="text-xl font-semibold">{activity.title}</h3>
-                        <p className="text-gray-600">{activity.description}</p>
-                        <p className="text-green-600 font-bold mt-2">${activity.priceAdult}</p>
-                    </div>
-                ))}
-            </div>
+  const activities = propActivities || data?.activities;
+
+  if (!propActivities && loading) return (
+    <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8 pt-24 px-4 sm:px-8 ${className}`}>
+      {[...Array(limit || 10)].map((_, i) => (
+        <div key={i} className="animate-pulse space-y-3">
+          <div className="bg-gray-200 rounded-xl aspect-square"></div>
+          <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/3"></div>
         </div>
-    );
+      ))}
+    </div>
+  );
+
+  if (!propActivities && error) return (
+    <div className="pt-24 text-center text-red-500">
+      Error loading activities: {error.message}
+    </div>
+  );
+
+  const displayActivities = limit ? activities?.slice(0, limit) : activities;
+
+  return (
+    <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-8 ${className}`}>
+      {displayActivities?.map((activity: Activity) => (
+        <ActivityCard key={activity.id} activity={activity} />
+      ))}
+    </div>
+  );
 };
 
 export default ActivityList;
