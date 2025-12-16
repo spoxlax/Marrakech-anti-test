@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, gql } from '@apollo/client';
 import { Star, MapPin, User, Calendar, Share, Heart, Award } from 'lucide-react';
+import { format } from 'date-fns';
 import Navbar from '../components/Navbar';
 import ImageGallery from '../components/ImageGallery';
+import DateCalendar from '../components/DateCalendar';
 
 const GET_ACTIVITY_AND_REVIEWS = gql`
   query GetActivityAndReviews($id: ID!) {
@@ -58,7 +60,7 @@ const Booking: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const [date, setDate] = useState<string>('');
+  const [date, setDate] = useState<Date | undefined>(undefined);
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
 
@@ -71,11 +73,11 @@ const Booking: React.FC = () => {
   const reviews: Review[] = data?.reviews ?? [];
 
   const handleReserve = () => {
-    if (!activity) return;
+    if (!activity || !date) return;
     navigate('/checkout', {
       state: {
         activityId: activity.id,
-        date: date,
+        date: date.toISOString().split('T')[0],
         adults,
         children,
       }
@@ -226,41 +228,57 @@ const Booking: React.FC = () => {
 
               {/* Reservation Inputs */}
               <div className="space-y-4">
-                <div className="border border-gray-400 rounded-lg overflow-hidden">
-                  <div className="grid grid-cols-2 border-b border-gray-400">
-                    <div className="p-3 border-r border-gray-400 col-span-2">
-                      <label className="block text-[10px] font-bold uppercase text-gray-700">Date</label>
-                      <input
-                        type="date"
-                        value={date}
-                        className="w-full text-sm outline-none text-gray-600 cursor-pointer"
-                        onChange={(e) => setDate(e.target.value)}
-                        min={new Date().toISOString().split('T')[0]}
-                      />
-                    </div>
-                  </div>
-                  <div className="p-3">
-                    <label className="block text-[10px] font-bold uppercase text-gray-700">Guests</label>
-                    <div className="flex gap-4 items-center mt-1">
-                      <div className="flex-1">
-                        <div className="text-xs">Adults</div>
-                        <input
-                          type="number"
-                          min="1"
-                          value={adults}
-                          onChange={(e) => setAdults(Number(e.target.value))}
-                          className="w-full text-sm outline-none border-b border-gray-200"
-                        />
+                {/* Date Calendar Section */}
+                <DateCalendar
+                  selectedDate={date}
+                  onDateSelect={setDate}
+                />
+
+                {/* Guests Section */}
+                <div className="border border-gray-300 rounded-xl p-4">
+                  <label className="block text-xs font-semibold text-gray-700 mb-3">Guests</label>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="font-medium text-sm">Adults</div>
+                        <div className="text-xs text-gray-500">Age 13+</div>
                       </div>
-                      <div className="flex-1">
-                        <div className="text-xs">Children</div>
-                        <input
-                          type="number"
-                          min="0"
-                          value={children}
-                          onChange={(e) => setChildren(Number(e.target.value))}
-                          className="w-full text-sm outline-none border-b border-gray-200"
-                        />
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => setAdults(Math.max(1, adults - 1))}
+                          className="w-8 h-8 rounded-full border border-gray-300 hover:border-gray-900 flex items-center justify-center text-gray-600 hover:text-gray-900 transition"
+                        >
+                          −
+                        </button>
+                        <span className="w-8 text-center font-medium">{adults}</span>
+                        <button
+                          onClick={() => setAdults(adults + 1)}
+                          className="w-8 h-8 rounded-full border border-gray-300 hover:border-gray-900 flex items-center justify-center text-gray-600 hover:text-gray-900 transition"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="font-medium text-sm">Children</div>
+                        <div className="text-xs text-gray-500">Ages 2-12</div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => setChildren(Math.max(0, children - 1))}
+                          className="w-8 h-8 rounded-full border border-gray-300 hover:border-gray-900 flex items-center justify-center text-gray-600 hover:text-gray-900 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                          disabled={children === 0}
+                        >
+                          −
+                        </button>
+                        <span className="w-8 text-center font-medium">{children}</span>
+                        <button
+                          onClick={() => setChildren(children + 1)}
+                          className="w-8 h-8 rounded-full border border-gray-300 hover:border-gray-900 flex items-center justify-center text-gray-600 hover:text-gray-900 transition"
+                        >
+                          +
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -298,11 +316,11 @@ const Booking: React.FC = () => {
                 <span>Total</span>
                 <span>${calculateTotal()}</span>
               </div>
-            </div>
-          </div>
-        </div>
-      </main>
-    </div>
+            </div >
+          </div >
+        </div >
+      </main >
+    </div >
   );
 };
 
