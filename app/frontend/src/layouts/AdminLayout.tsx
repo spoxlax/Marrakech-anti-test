@@ -31,7 +31,7 @@ const AdminLayout: React.FC = () => {
             `}>
                 <div className="h-16 flex items-center justify-between px-6 border-b border-gray-100">
                     <Link to="/" className="text-xl font-bold text-[#FF385C]">
-                        antigravity
+                        Marrakech Travel
                     </Link>
                     <button className="lg:hidden" onClick={() => setIsSidebarOpen(false)}>
                         <X size={20} />

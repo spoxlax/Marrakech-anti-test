@@ -51,7 +51,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ activity }) => {
                         {activity.duration ? activity.duration : 'Flexible duration'}
                     </div>
                     <div className="font-light text-neutral-500 text-sm">
-                        Antigravity Host
+                        Marrakech Travel Host
                     </div>
 
                     <div className="flex flex-row items-center gap-1 mt-1 text-sm">

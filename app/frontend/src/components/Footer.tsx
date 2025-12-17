@@ -58,7 +58,7 @@ const Footer: React.FC = () => {
                 {/* Bottom Bar */}
                 <div className="border-t border-gray-300 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center text-sm">
                     <div className="flex flex-wrap gap-4 items-center">
-                        <span>© 2025 Antigravity, Inc.</span>
+                        <span>© 2025 Marrakech Travel, Inc.</span>
                         <span className="hidden md:inline">·</span>
                         <span className="hover:underline cursor-pointer">Privacy</span>
                         <span className="hidden md:inline">·</span>

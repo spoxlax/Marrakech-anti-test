@@ -14,8 +14,8 @@ const Navbar: React.FC = () => {
                 <div className="flex flex-row items-center justify-between gap-3 md:gap-0 h-20">
                     {/* Logo */}
                     <Link to="/" className="flex-shrink-0 cursor-pointer">
-                        <span className="text-[#FF385C] text-2xl font-bold hidden md:block">airbnb-clone</span>
-                        <span className="text-[#FF385C] text-2xl font-bold block md:hidden">A</span>
+                        <span className="text-[#FF385C] text-2xl font-bold hidden md:block">Marrakech Travel</span>
+                        <span className="text-[#FF385C] text-2xl font-bold block md:hidden">MT</span>
                     </Link>
 
                     {/* User Menu */}

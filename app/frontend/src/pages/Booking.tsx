@@ -145,7 +145,7 @@ const Booking: React.FC = () => {
             {/* Host Info */}
             <div className="flex justify-between items-center border-b pb-6">
               <div>
-                <h2 className="text-[22px] font-semibold mb-1">Activity hosted by Antigravity</h2>
+                <h2 className="text-[22px] font-semibold mb-1">Activity hosted by Marrakech Travel</h2>
                 <div className="text-neutral-500">
                   {activity.duration} · {activity.maxParticipants} Guests · {activity.category}
                 </div>

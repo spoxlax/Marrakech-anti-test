@@ -53,7 +53,7 @@ const Login: React.FC = () => {
 
                 {/* Body */}
                 <div className="p-6 sm:p-8">
-                    <div className="text-[#FF385C] text-sm font-semibold">antigravity</div>
+                    <div className="text-[#FF385C] text-sm font-semibold">Marrakech Travel</div>
                     <h2 className="text-2xl font-semibold mt-2 mb-6 text-gray-900">Welcome back</h2>
                     <form className="space-y-4" onSubmit={handleSubmit}>
                         <div className="border border-gray-400 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-black focus-within:border-transparent">

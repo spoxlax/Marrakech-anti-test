@@ -13,7 +13,7 @@ const About: React.FC = () => {
                         <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 mt-2">About Wanderlust</h1>
                         <p className="text-gray-600 text-lg mt-4">
                             Wanderlust is a modern platform for discovering and booking authentic activities around the world,
-                            inspired by the simplicity and trust of Airbnb.
+                            inspired by the simplicity and trust of Marrakech Travel.
                         </p>
                     </div>
 

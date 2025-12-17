@@ -55,7 +55,7 @@ const Register: React.FC = () => {
 
                 {/* Body */}
                 <div className="p-6 sm:p-8">
-                    <div className="text-[#FF385C] text-sm font-semibold">antigravity</div>
+                    <div className="text-[#FF385C] text-sm font-semibold">Marrakech Travel</div>
                     <h2 className="text-2xl font-semibold mt-2 mb-6 text-gray-900">Create your account</h2>
                     <form className="space-y-4" onSubmit={handleSubmit}>
                         <div className="border border-gray-400 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-black focus-within:border-transparent">
@@ -129,7 +129,7 @@ const Register: React.FC = () => {
                         )}
 
                         <p className="text-xs text-gray-500 mt-2">
-                            By selecting <strong>Agree and continue</strong>, I agree to Airbnb's Terms of Service, Payments Terms of Service, and Nondiscrimination Policy and acknowledge the Privacy Policy.
+                            By selecting <strong>Agree and continue</strong>, I agree to Marrakech Travel's Terms of Service, Payments Terms of Service, and Nondiscrimination Policy and acknowledge the Privacy Policy.
                         </p>
 
                         <button

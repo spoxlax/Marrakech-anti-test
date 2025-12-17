@@ -139,7 +139,7 @@ const Checkout: React.FC = () => {
                                 <img src={activity.images?.[0] || 'https://via.placeholder.com/150'} alt={activity.title} className="w-full h-full object-cover" />
                             </div>
                             <div className="min-w-0">
-                                <div className="text-xs text-gray-500 mb-1">Experience hosted by Antigravity</div>
+                                <div className="text-xs text-gray-500 mb-1">Experience hosted by Marrakech Travel</div>
                                 <h2 className="font-semibold text-base text-gray-900 line-clamp-2">{activity.title}</h2>
                                 <div className="flex items-center gap-1 mt-2 text-xs font-semibold">
                                     <Star size={12} className="fill-black" /> 5.0 <span className="text-gray-400 font-normal">(Mock Reviews)</span>
@@ -338,7 +338,7 @@ const Checkout: React.FC = () => {
                                     <img src={activity.images?.[0] || 'https://via.placeholder.com/150'} alt={activity.title} className="w-full h-full object-cover" />
                                 </div>
                                 <div>
-                                    <div className="text-xs text-gray-500 mb-1">Experience hosted by Antigravity</div>
+                                    <div className="text-xs text-gray-500 mb-1">Experience hosted by Marrakech Travel</div>
                                     <h3 className="font-medium text-sm text-gray-900 line-clamp-2 leading-relaxed">{activity.title}</h3>
                                     <div className="flex items-center gap-1 mt-2 text-xs font-semibold">
                                         <Star size={12} className="fill-black" /> 5.0 <span className="text-gray-400 font-normal">(Mock Reviews)</span>
