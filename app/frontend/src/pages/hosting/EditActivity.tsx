@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, gql } from '@apollo/client';
 import { Upload, X, Loader } from 'lucide-react';
@@ -28,15 +28,43 @@ const UPDATE_ACTIVITY = gql`
   }
 `;
 
+type EditActivityQueryData = {
+    activity: {
+        id: string;
+        title: string;
+        description: string;
+        priceAdult: number;
+        priceChild: number;
+        duration: string;
+        maxParticipants: number;
+        category: string;
+        images?: string[] | null;
+    };
+};
+
 const EditActivity = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
     // Fetch existing data
-    const { data, loading: fetchLoading, error: fetchError } = useQuery(GET_ACTIVITY, {
+    const { loading: fetchLoading, error: fetchError } = useQuery<EditActivityQueryData>(GET_ACTIVITY, {
         variables: { id },
         skip: !id,
-        fetchPolicy: 'network-only' // Ensure fresh data
+        fetchPolicy: 'network-only',
+        onCompleted: (result) => {
+            const act = result?.activity;
+            if (!act) return;
+            setFormData({
+                title: act.title,
+                description: act.description,
+                priceAdult: act.priceAdult.toString(),
+                priceChild: act.priceChild.toString(),
+                duration: act.duration,
+                maxParticipants: act.maxParticipants.toString(),
+                category: act.category,
+                images: act.images || []
+            });
+        }
     });
 
     const [updateActivity, { loading: updateLoading }] = useMutation(UPDATE_ACTIVITY);
@@ -51,23 +79,6 @@ const EditActivity = () => {
         category: 'Tours',
         images: [] as string[]
     });
-
-    // Populate form when data is loaded
-    useEffect(() => {
-        if (data?.activity) {
-            const act = data.activity;
-            setFormData({
-                title: act.title,
-                description: act.description,
-                priceAdult: act.priceAdult.toString(),
-                priceChild: act.priceChild.toString(),
-                duration: act.duration,
-                maxParticipants: act.maxParticipants.toString(),
-                category: act.category,
-                images: act.images || []
-            });
-        }
-    }, [data]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });

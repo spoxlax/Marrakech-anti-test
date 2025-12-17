@@ -30,6 +30,14 @@ const DELETE_ACTIVITY = gql`
   }
 `;
 
+type AdminActivityRow = {
+    id: string;
+    title: string;
+    priceAdult: number;
+    status?: string | null;
+    vendorId?: string | null;
+};
+
 const AdminActivities: React.FC = () => {
     const { loading, error, data, refetch } = useQuery(GET_ALL_ACTIVITIES);
     const [approveActivity] = useMutation(APPROVE_ACTIVITY);
@@ -39,7 +47,7 @@ const AdminActivities: React.FC = () => {
         try {
             await approveActivity({ variables: { id } });
             refetch();
-        } catch (err) {
+        } catch {
             alert('Error approving activity');
         }
     };
@@ -49,7 +57,7 @@ const AdminActivities: React.FC = () => {
             try {
                 await deleteActivity({ variables: { id } });
                 refetch();
-            } catch (err) {
+            } catch {
                 alert('Error deleting activity');
             }
         }
@@ -58,7 +66,7 @@ const AdminActivities: React.FC = () => {
     if (loading) return <div className="p-8">Loading activities...</div>;
     if (error) return <div className="p-8 text-red-500">Error: {error.message}</div>;
 
-    const activities = data?.activities || [];
+    const activities: AdminActivityRow[] = data?.activities || [];
 
     return (
         <div className="space-y-6">
@@ -84,7 +92,7 @@ const AdminActivities: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                        {activities.map((activity: any) => (
+                        {activities.map((activity) => (
                             <tr key={activity.id} className="hover:bg-gray-50 transition-colors">
                                 <td className="px-6 py-4 font-medium text-gray-900">{activity.title}</td>
                                 <td className="px-6 py-4 text-gray-600">${activity.priceAdult}</td>

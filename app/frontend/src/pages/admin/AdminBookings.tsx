@@ -26,13 +26,28 @@ const ADMIN_BOOKINGS = gql`
   }
 `;
 
+type AdminBookingRow = {
+    id: string;
+    date: string;
+    status: string;
+    totalPrice: number;
+    customerInfo?: {
+        firstName?: string | null;
+        lastName?: string | null;
+        email?: string | null;
+    } | null;
+    activity?: {
+        title?: string | null;
+    } | null;
+};
+
 const AdminBookings: React.FC = () => {
     const { loading, error, data } = useQuery(ADMIN_BOOKINGS);
 
     if (loading) return <div className="p-8">Loading booking data...</div>;
     if (error) return <div className="p-8 text-red-500">Error loading bookings: {error.message}</div>;
 
-    const bookings = data?.vendorBookings || [];
+    const bookings: AdminBookingRow[] = data?.vendorBookings || [];
 
     return (
         <div className="space-y-6">
@@ -55,7 +70,7 @@ const AdminBookings: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                        {bookings.map((booking: any) => (
+                        {bookings.map((booking) => (
                             <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
                                 <td className="px-6 py-4 font-medium text-gray-900">
                                     {booking.activity?.title || 'Unknown Activity'}

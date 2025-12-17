@@ -1,9 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ActivityCard, { type Activity } from '../components/ActivityCard';
 import { useQuery, gql } from '@apollo/client';
-import { Palmtree, Tent, Mountain, Camera, Grid, Car, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Palmtree, Tent, Mountain, Camera, Grid, Car, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { DayPicker } from 'react-day-picker';
+import { format } from 'date-fns';
+import 'react-day-picker/style.css';
 
 const GET_ACTIVITIES = gql`
   query GetActivities {
@@ -18,6 +22,12 @@ const GET_ACTIVITIES = gql`
       images
       category
     }
+  }
+`;
+
+const SEARCH_SUGGESTIONS = gql`
+  query SearchSuggestions($query: String!) {
+    searchSuggestions(query: $query)
   }
 `;
 
@@ -55,15 +65,49 @@ const sliderImages = [
 ];
 
 const Home: React.FC = () => {
+    const navigate = useNavigate();
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [activeSlide, setActiveSlide] = useState(0);
+    const [whereQuery, setWhereQuery] = useState('');
+    const [searchDate, setSearchDate] = useState<Date | undefined>(undefined);
+    const [adults, setAdults] = useState(1);
+    const [children, setChildren] = useState(0);
+    const [openPanel, setOpenPanel] = useState<'where' | 'when' | 'who' | null>(null);
+    const searchBarRef = useRef<HTMLDivElement>(null);
+
     const { loading, error, data } = useQuery(GET_ACTIVITIES);
+    const { data: suggestionsData } = useQuery(SEARCH_SUGGESTIONS, {
+        variables: { query: whereQuery },
+        skip: whereQuery.trim().length < 2,
+    });
 
     const activities: Activity[] = data?.activities || [];
 
     const filteredActivities = selectedCategory === 'All'
         ? activities
         : activities.filter(a => a.category === selectedCategory);
+
+    const guestCount = adults + children;
+    const guestLabel = useMemo(() => {
+        if (guestCount <= 0) return 'Add guests';
+        return `${guestCount} guest${guestCount === 1 ? '' : 's'}`;
+    }, [guestCount]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (searchBarRef.current && !searchBarRef.current.contains(event.target as Node)) {
+                setOpenPanel(null);
+            }
+        };
+
+        if (openPanel) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [openPanel]);
 
     useEffect(() => {
         const interval = window.setInterval(() => {
@@ -81,6 +125,20 @@ const Home: React.FC = () => {
 
     const goNext = () => {
         setActiveSlide((prev) => (prev + 1) % sliderImages.length);
+    };
+
+    const handleSearch = (queryOverride?: string) => {
+        const q = (queryOverride ?? whereQuery).trim();
+        const params = new URLSearchParams();
+
+        if (q) params.set('q', q);
+        if (searchDate) params.set('date', searchDate.toISOString().split('T')[0]);
+        params.set('adults', String(adults));
+        params.set('children', String(children));
+        params.set('guests', String(guestCount));
+
+        setOpenPanel(null);
+        navigate(params.toString() ? `/search?${params.toString()}` : '/search');
     };
 
     return (
@@ -147,6 +205,261 @@ const Home: React.FC = () => {
                                     className={`h-2 w-2 rounded-full transition ${i === activeSlide ? 'bg-white' : 'bg-white/50 hover:bg-white/70'}`}
                                 />
                             ))}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="relative z-50 -mt-5 sm:-mt-7 pb-6" ref={searchBarRef}>
+                    <div className="mx-auto max-w-4xl">
+                        <div className="relative">
+                            <div className="bg-white border border-gray-200 shadow-md rounded-3xl md:rounded-full">
+                                <div className="flex flex-col md:flex-row md:items-center">
+                                    <div
+                                        className={`flex-1 px-6 py-4 md:py-3 rounded-t-3xl md:rounded-full transition ${openPanel === 'where' ? 'bg-neutral-100' : 'hover:bg-neutral-50'}`}
+                                        onClick={() => setOpenPanel('where')}
+                                        role="button"
+                                        tabIndex={0}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') setOpenPanel('where');
+                                        }}
+                                    >
+                                        <div className="text-[10px] font-bold uppercase text-gray-500">Where</div>
+                                        <input
+                                            value={whereQuery}
+                                            onChange={(e) => {
+                                                setWhereQuery(e.target.value);
+                                                if (openPanel !== 'where') setOpenPanel('where');
+                                            }}
+                                            onFocus={() => setOpenPanel('where')}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') handleSearch();
+                                            }}
+                                            placeholder="Search activities"
+                                            className="w-full bg-transparent outline-none text-sm font-medium text-gray-900 placeholder-gray-500"
+                                        />
+                                    </div>
+
+                                    <div className="hidden md:block h-8 w-px bg-gray-200" />
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setOpenPanel('when')}
+                                        className={`flex-1 px-6 py-4 md:py-3 text-left transition ${openPanel === 'when' ? 'bg-neutral-100' : 'hover:bg-neutral-50'} md:rounded-full`}
+                                    >
+                                        <div className="text-[10px] font-bold uppercase text-gray-500">When</div>
+                                        <div className="text-sm font-medium text-gray-900">
+                                            {searchDate ? format(searchDate, 'MMM dd, yyyy') : 'Add date'}
+                                        </div>
+                                    </button>
+
+                                    <div className="hidden md:block h-8 w-px bg-gray-200" />
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setOpenPanel('who')}
+                                        className={`flex-1 px-6 py-4 md:py-3 text-left transition ${openPanel === 'who' ? 'bg-neutral-100' : 'hover:bg-neutral-50'} md:rounded-full`}
+                                    >
+                                        <div className="text-[10px] font-bold uppercase text-gray-500">Who</div>
+                                        <div className={`text-sm font-medium ${guestCount > 0 ? 'text-gray-900' : 'text-gray-500'}`}>
+                                            {guestLabel}
+                                        </div>
+                                    </button>
+
+                                    <div className="p-3 md:p-2 md:pr-2 flex items-center justify-end">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSearch()}
+                                            aria-label="Search"
+                                            className="h-12 w-12 rounded-full bg-[#FF385C] hover:bg-[#D90B3E] text-white flex items-center justify-center shadow-sm transition"
+                                        >
+                                            <Search size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {openPanel === 'where' && whereQuery.trim().length >= 2 && (suggestionsData?.searchSuggestions?.length || 0) > 0 && (
+                                <div className="absolute left-0 right-0 top-full mt-3 bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden z-50">
+                                    <div className="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Suggestions</div>
+                                    <div className="py-2">
+                                        {suggestionsData.searchSuggestions.map((suggestion: string, index: number) => (
+                                            <button
+                                                key={`${suggestion}-${index}`}
+                                                type="button"
+                                                onClick={() => {
+                                                    setWhereQuery(suggestion);
+                                                    setOpenPanel(null);
+                                                }}
+                                                className="w-full text-left px-6 py-3 hover:bg-neutral-50 transition cursor-pointer flex items-center gap-3 text-sm font-medium text-gray-700"
+                                            >
+                                                <div className="bg-gray-100 p-2 rounded-lg">
+                                                    <Search size={14} className="text-gray-500" />
+                                                </div>
+                                                {suggestion}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {openPanel === 'when' && (
+                                <div className="absolute left-0 right-0 top-full mt-3 flex justify-center z-50">
+                                    <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-5" style={{ minWidth: '320px' }}>
+                                        <style>{`
+            .custom-home-calendar .rdp {
+              --rdp-cell-size: 40px;
+              margin: 0;
+            }
+            .custom-home-calendar .rdp-root {
+              font-family: inherit;
+            }
+            .custom-home-calendar .rdp-month {
+              width: 100%;
+            }
+            .custom-home-calendar .rdp-caption_label {
+              font-size: 16px;
+              font-weight: 600;
+            }
+            .custom-home-calendar .rdp-head_cell {
+              font-size: 12px;
+              font-weight: 600;
+              color: #717171;
+              text-transform: uppercase;
+              width: 40px;
+              padding: 8px 0;
+            }
+            .custom-home-calendar .rdp-cell {
+              width: 40px;
+              height: 40px;
+              padding: 0;
+            }
+            .custom-home-calendar .rdp-day {
+              width: 40px;
+              height: 40px;
+              border-radius: 50%;
+              font-size: 14px;
+              font-weight: 500;
+            }
+            .custom-home-calendar .rdp-day:hover:not([disabled]):not(.rdp-day_selected) {
+              background-color: #f0f0f0;
+            }
+            .custom-home-calendar .rdp-day_selected {
+              background-color: #222222 !important;
+              color: white !important;
+            }
+            .custom-home-calendar .rdp-day_disabled {
+              opacity: 0.25;
+              text-decoration: line-through;
+            }
+            .custom-home-calendar .rdp-nav_button {
+              width: 32px;
+              height: 32px;
+              border-radius: 50%;
+            }
+            .custom-home-calendar .rdp-nav_button:hover {
+              background-color: #f7f7f7;
+            }
+            .custom-home-calendar .rdp-table {
+              width: 100%;
+              border-collapse: collapse;
+            }
+          `}</style>
+
+                                        <div className="custom-home-calendar">
+                                            <DayPicker
+                                                mode="single"
+                                                selected={searchDate}
+                                                onSelect={(date) => {
+                                                    setSearchDate(date);
+                                                    setOpenPanel(null);
+                                                }}
+                                                disabled={{ before: new Date() }}
+                                                showOutsideDays={false}
+                                                fixedWeeks
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {openPanel === 'who' && (
+                                <div className="absolute left-0 right-0 top-full mt-3 flex justify-center z-50">
+                                    <div className="w-full md:w-[420px] bg-white rounded-2xl shadow-2xl border border-gray-200 p-6">
+                                        <div className="space-y-6">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <div className="font-semibold">Adults</div>
+                                                    <div className="text-sm text-gray-500">Age 13+</div>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setAdults(Math.max(1, adults - 1))}
+                                                        className="w-9 h-9 rounded-full border border-gray-300 hover:border-gray-900 flex items-center justify-center text-gray-700 transition"
+                                                    >
+                                                        −
+                                                    </button>
+                                                    <div className="w-8 text-center font-medium">{adults}</div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setAdults(adults + 1)}
+                                                        className="w-9 h-9 rounded-full border border-gray-300 hover:border-gray-900 flex items-center justify-center text-gray-700 transition"
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="h-px bg-gray-100" />
+
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <div className="font-semibold">Children</div>
+                                                    <div className="text-sm text-gray-500">Ages 2–12</div>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setChildren(Math.max(0, children - 1))}
+                                                        disabled={children === 0}
+                                                        className="w-9 h-9 rounded-full border border-gray-300 hover:border-gray-900 flex items-center justify-center text-gray-700 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                                                    >
+                                                        −
+                                                    </button>
+                                                    <div className="w-8 text-center font-medium">{children}</div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setChildren(children + 1)}
+                                                        className="w-9 h-9 rounded-full border border-gray-300 hover:border-gray-900 flex items-center justify-center text-gray-700 transition"
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center justify-between pt-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setAdults(1);
+                                                        setChildren(0);
+                                                    }}
+                                                    className="text-sm font-semibold underline"
+                                                >
+                                                    Clear
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setOpenPanel(null)}
+                                                    className="px-4 py-2 rounded-lg bg-black text-white text-sm font-semibold hover:bg-neutral-800 transition"
+                                                >
+                                                    Done
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

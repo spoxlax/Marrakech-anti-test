@@ -20,6 +20,14 @@ const DELETE_USER = gql`
   }
 `;
 
+type AdminUserRow = {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role?: string | null;
+};
+
 const AdminUsers: React.FC = () => {
     const { loading, error, data, refetch } = useQuery(GET_USERS);
     const [deleteUser] = useMutation(DELETE_USER);
@@ -29,7 +37,7 @@ const AdminUsers: React.FC = () => {
             try {
                 await deleteUser({ variables: { id } });
                 refetch();
-            } catch (err) {
+            } catch {
                 alert('Error deleting user');
             }
         }
@@ -60,7 +68,7 @@ const AdminUsers: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                        {data.users.map((user: any) => (
+                        {(data?.users as AdminUserRow[] | undefined)?.map((user) => (
                             <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
@@ -94,7 +102,7 @@ const AdminUsers: React.FC = () => {
                         ))}
                     </tbody>
                 </table>
-                {data.users.length === 0 && (
+                {(data?.users?.length || 0) === 0 && (
                     <div className="p-8 text-center text-gray-500 text-sm">
                         No users found.
                     </div>

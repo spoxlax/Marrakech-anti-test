@@ -15,13 +15,21 @@ const MY_ACTIVITIES = gql`
   }
 `;
 
+type HostingActivityRow = {
+    id: string;
+    title: string;
+    priceAdult: number;
+    status?: string | null;
+    images?: string[] | null;
+};
+
 const HostingActivities: React.FC = () => {
     const { loading, error, data } = useQuery(MY_ACTIVITIES);
 
     if (loading) return <div className="p-8">Loading your listings...</div>;
     if (error) return <div className="p-8 text-red-500">Error: {error.message} (Are you logged in as an Admin/Vendor?)</div>;
 
-    const activities = data?.myActivities || [];
+    const activities: HostingActivityRow[] = data?.myActivities || [];
 
     return (
         <div className="space-y-6">
@@ -43,7 +51,7 @@ const HostingActivities: React.FC = () => {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {activities.map((activity: any) => (
+                    {activities.map((activity) => (
                         <div key={activity.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm group">
                             <div className="aspect-[4/3] bg-gray-100 relative">
                                 {activity.images?.[0] ? (

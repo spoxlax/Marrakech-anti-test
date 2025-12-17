@@ -22,6 +22,18 @@ const VENDOR_BOOKINGS = gql`
   }
 `;
 
+type VendorBookingRow = {
+    id: string;
+    date: string;
+    status: string;
+    totalPrice: number;
+    customerInfo?: {
+        firstName?: string | null;
+        lastName?: string | null;
+        email?: string | null;
+    } | null;
+};
+
 const HostingBookings: React.FC = () => {
     const { loading, error, data } = useQuery(VENDOR_BOOKINGS);
 
@@ -30,7 +42,7 @@ const HostingBookings: React.FC = () => {
     // Assuming it was part of the original schema as viewed earlier.
     if (error) return <div className="p-8 text-red-500">Error: {error.message}</div>;
 
-    const bookings = data?.vendorBookings || [];
+    const bookings: VendorBookingRow[] = data?.vendorBookings || [];
 
     return (
         <div className="space-y-6">
@@ -48,7 +60,7 @@ const HostingBookings: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                        {bookings.map((booking: any) => (
+                        {bookings.map((booking) => (
                             <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
                                 <td className="px-6 py-4">
                                     <div className="font-medium text-gray-900">

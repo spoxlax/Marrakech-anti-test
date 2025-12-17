@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, gql } from '@apollo/client';
 import Navbar from '../components/Navbar';
@@ -22,29 +22,13 @@ const SearchResults: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // Initial State from URL
     const params = new URLSearchParams(location.search);
-    const [query, setQuery] = useState(params.get('q') || '');
-    const [category, setCategory] = useState(params.get('category') || 'All');
-    const [city, setCity] = useState(params.get('city') || 'All');
-    const [minRating, setMinRating] = useState(params.get('rating') || '');
-    const [priceRange, setPriceRange] = useState({
-        min: params.get('minPrice') || '',
-        max: params.get('maxPrice') || ''
-    });
-
-    // Sync URL with State
-    useEffect(() => {
-        const newParams = new URLSearchParams(location.search);
-        setQuery(newParams.get('q') || '');
-        setCategory(newParams.get('category') || 'All');
-        setCity(newParams.get('city') || 'All');
-        setMinRating(newParams.get('rating') || '');
-        setPriceRange({
-            min: newParams.get('minPrice') || '',
-            max: newParams.get('maxPrice') || ''
-        });
-    }, [location.search]);
+    const query = params.get('q') || '';
+    const category = params.get('category') || 'All';
+    const city = params.get('city') || 'All';
+    const minRating = params.get('rating') || '';
+    const minPrice = params.get('minPrice') || '';
+    const maxPrice = params.get('maxPrice') || '';
 
     const { data, loading, error } = useQuery(SEARCH_ACTIVITIES, {
         variables: {
@@ -52,8 +36,8 @@ const SearchResults: React.FC = () => {
             category: category === 'All' ? undefined : category,
             city: city === 'All' ? undefined : city,
             minRating: minRating ? parseFloat(minRating) : undefined,
-            minPrice: priceRange.min ? parseFloat(priceRange.min) : undefined,
-            maxPrice: priceRange.max ? parseFloat(priceRange.max) : undefined
+            minPrice: minPrice ? parseFloat(minPrice) : undefined,
+            maxPrice: maxPrice ? parseFloat(maxPrice) : undefined
         },
         fetchPolicy: 'network-only'
     });
@@ -132,7 +116,7 @@ const SearchResults: React.FC = () => {
                                 type="number"
                                 placeholder="Min"
                                 className="w-16 text-sm border-none outline-none p-0 focus:ring-0 text-gray-600 placeholder-gray-400"
-                                value={priceRange.min}
+                                value={minPrice}
                                 onChange={(e) => updateFilters('minPrice', e.target.value)}
                             />
                             <span className="text-gray-400">-</span>
@@ -140,7 +124,7 @@ const SearchResults: React.FC = () => {
                                 type="number"
                                 placeholder="Max"
                                 className="w-16 text-sm border-none outline-none p-0 focus:ring-0 text-gray-600 placeholder-gray-400"
-                                value={priceRange.max}
+                                value={maxPrice}
                                 onChange={(e) => updateFilters('maxPrice', e.target.value)}
                             />
                         </div>

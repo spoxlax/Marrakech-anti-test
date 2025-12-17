@@ -7,9 +7,10 @@ import 'react-day-picker/style.css';
 interface DateCalendarProps {
     selectedDate: Date | undefined;
     onDateSelect: (date: Date | undefined) => void;
+    label?: string;
 }
 
-const DateCalendar: React.FC<DateCalendarProps> = ({ selectedDate, onDateSelect }) => {
+const DateCalendar: React.FC<DateCalendarProps> = ({ selectedDate, onDateSelect, label }) => {
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -36,14 +37,13 @@ const DateCalendar: React.FC<DateCalendarProps> = ({ selectedDate, onDateSelect 
 
     return (
         <div ref={containerRef} className="relative w-full">
-            {/* Trigger Button */}
             <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
                 className="w-full p-4 border border-gray-300 rounded-xl bg-white hover:border-gray-900 transition flex items-center justify-between text-left"
             >
                 <div>
-                    <div className="text-[10px] font-bold uppercase text-gray-500 mb-1">Date</div>
+                    <div className="text-[10px] font-bold uppercase text-gray-500 mb-1">{label || 'Date'}</div>
                     <div className="text-sm font-medium text-gray-900">
                         {selectedDate ? format(selectedDate, 'MMM dd, yyyy') : 'Add date'}
                     </div>

@@ -1,42 +1,12 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useQuery, gql } from '@apollo/client';
+import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../context/authCore';
-import { Menu, User, Search, Globe } from 'lucide-react';
-
-const SEARCH_SUGGESTIONS = gql`
-  query SearchSuggestions($query: String!) {
-    searchSuggestions(query: $query)
-  }
-`;
+import { Menu, User, Globe } from 'lucide-react';
 
 const Navbar: React.FC = () => {
     const { user, logout } = useAuth();
-    const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-    // Search State
-    const [searchQuery, setSearchQuery] = useState('');
-    const [showSuggestions, setShowSuggestions] = useState(false);
-
-    // Debounced query for suggestions could be implemented, but for simplicity interacting directly
-    const { data: suggestionsData } = useQuery(SEARCH_SUGGESTIONS, {
-        variables: { query: searchQuery },
-        skip: searchQuery.length < 2
-    });
-
-    const handleSearch = (q: string) => {
-        if (!q.trim()) return;
-        setShowSuggestions(false);
-        navigate(`/search?q=${encodeURIComponent(q)}`);
-    };
-
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-            handleSearch(searchQuery);
-        }
-    };
 
     return (
         <nav className="fixed w-full bg-white z-50 border-b border-gray-200">
@@ -47,53 +17,6 @@ const Navbar: React.FC = () => {
                         <span className="text-[#FF385C] text-2xl font-bold hidden md:block">airbnb-clone</span>
                         <span className="text-[#FF385C] text-2xl font-bold block md:hidden">A</span>
                     </Link>
-
-                    {/* Search Bar (Centered) */}
-                    <div className="hidden md:block w-full md:w-auto relative">
-                        <div className="transition-all cursor-pointer border-[1px] w-full md:w-auto py-2 rounded-full shadow-sm hover:shadow-md transition cursor-pointer flex flex-row items-center justify-between bg-white relative z-10">
-                            <input
-                                type="text"
-                                className="pl-6 pr-2 py-1 text-sm font-semibold outline-none text-gray-800 placeholder-gray-600 bg-transparent w-64"
-                                placeholder="Start your search"
-                                value={searchQuery}
-                                onChange={(e) => {
-                                    setSearchQuery(e.target.value);
-                                    setShowSuggestions(true);
-                                }}
-                                onKeyDown={handleKeyDown}
-                                onFocus={() => setShowSuggestions(true)}
-                                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)} // Delay to allow click
-                            />
-                            <div className="text-sm pl-2 pr-2 text-gray-600 flex flex-row items-center gap-3">
-                                <button
-                                    onClick={() => handleSearch(searchQuery)}
-                                    className="p-2 bg-[#FF385C] rounded-full text-white hover:bg-[#d90b3e] transition"
-                                >
-                                    <Search size={15} />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Suggestions Dropdown */}
-                        {showSuggestions && searchQuery.length >= 2 && suggestionsData?.searchSuggestions?.length > 0 && (
-                            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden py-2 z-0 animate-in fade-in slide-in-from-top-2">
-                                <div className="px-4 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider">Suggestions</div>
-                                {suggestionsData.searchSuggestions.map((suggestion: string, index: number) => (
-                                    <div
-                                        key={index}
-                                        className="px-6 py-3 hover:bg-neutral-50 cursor-pointer flex items-center gap-3 text-sm font-medium text-gray-700"
-                                        onClick={() => {
-                                            setSearchQuery(suggestion);
-                                            handleSearch(suggestion);
-                                        }}
-                                    >
-                                        <div className="bg-gray-100 p-2 rounded-lg"><Search size={14} className="text-gray-500" /></div>
-                                        {suggestion}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
 
                     {/* User Menu */}
                     <div className="relative">

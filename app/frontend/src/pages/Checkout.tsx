@@ -117,7 +117,7 @@ const Checkout: React.FC = () => {
                 // Navigate to confirmation page
                 navigate(`/booking/success/${result.createBooking.id}`);
             }
-        } catch (err: any) {
+        } catch (err) {
             console.error("Booking failed", err);
         }
     };
