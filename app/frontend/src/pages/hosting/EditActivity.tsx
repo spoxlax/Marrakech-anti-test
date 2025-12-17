@@ -153,10 +153,19 @@ const EditActivity = () => {
                     <div>
                         <label className="block text-sm font-medium mb-1">Category</label>
                         <select name="category" value={formData.category} onChange={handleChange} className="w-full border p-2 rounded">
+                            <option>Camping</option>
+                            <option>Camel Tours</option>
+                            <option>Quad Tours</option>
+                            <option>Buggy Tours</option>
+                            <option>Hiking</option>
                             <option>Tours</option>
-                            <option>Workshops</option>
-                            <option>Food</option>
+                            <option>Desert</option>
+                            <option>Cultural</option>
                             <option>Nature</option>
+                            <option>Adventure</option>
+                            <option>Food</option>
+                            <option>Sport</option>
+                            <option>Workshops</option>
                         </select>
                     </div>
                     <div className="md:col-span-2">

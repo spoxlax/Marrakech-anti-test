@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, gql } from '@apollo/client';
-import { Star, MapPin, User, Calendar, Share, Heart, Award } from 'lucide-react';
-import { format } from 'date-fns';
+import { Star, MapPin, User, Share, Heart, Award } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import ImageGallery from '../components/ImageGallery';
 import DateCalendar from '../components/DateCalendar';
 
@@ -111,19 +111,19 @@ const Booking: React.FC = () => {
     <div className="min-h-screen bg-white font-sans text-[#222222]">
       <Navbar />
 
-      <main className="max-w-[1120px] mx-auto px-4 sm:px-10 py-8">
+      <main className="max-w-[1120px] mx-auto px-4 sm:px-10 py-8 pt-28 pb-14">
 
         {/* Header Section */}
         <section className="mb-6">
           <h1 className="text-[26px] font-semibold mb-2">{activity.title}</h1>
-          <div className="flex justify-between items-center text-sm">
-            <div className="flex items-center gap-2 font-medium underline cursor-pointer">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 text-sm">
+            <div className="flex flex-wrap items-center gap-2 font-medium underline cursor-pointer">
               <Star size={14} className="fill-black" />
               <span>{averageRating} · {reviews.length} reviews</span>
               <span className="text-neutral-500 no-underline">·</span>
               <span>Marrakech, Morocco</span>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               <button className="flex items-center gap-2 hover:bg-neutral-100 px-3 py-2 rounded-lg underline font-medium text-sm transition">
                 <Share size={16} /> Share
               </button>
@@ -138,7 +138,7 @@ const Booking: React.FC = () => {
         <ImageGallery images={activity.images} title={activity.title} />
 
         {/* Content Split */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative mt-8">
 
           {/* Left Column: Details */}
           <div className="md:col-span-2 space-y-8">
@@ -215,7 +215,7 @@ const Booking: React.FC = () => {
 
           {/* Right Column: Sticky Reservation Card */}
           <div className="relative">
-            <div className="sticky top-28 border border-gray-200 rounded-xl shadow-xl p-6 bg-white">
+            <div className="sticky top-28 border border-gray-200 rounded-2xl shadow-sm p-6 bg-white">
               <div className="flex justify-between items-end mb-6">
                 <div>
                   <span className="text-2xl font-bold">${activity.priceAdult}</span>
@@ -287,7 +287,7 @@ const Booking: React.FC = () => {
                 <button
                   onClick={handleReserve}
                   disabled={!date}
-                  className="w-full bg-[#FF385C] hover:bg-[#D90B3E] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-lg transition-colors flex justify-center items-center"
+                  className="w-full bg-[#FF385C] hover:bg-[#D90B3E] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl transition-colors flex justify-center items-center"
                 >
                   Reserve
                 </button>
@@ -316,13 +316,14 @@ const Booking: React.FC = () => {
                 <span>Total</span>
                 <span>${calculateTotal()}</span>
               </div>
-            </div >
-          </div >
-        </div >
-      </main >
-    </div >
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <Footer />
+    </div>
   );
 };
 
 export default Booking;
-

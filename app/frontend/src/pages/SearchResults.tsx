@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, gql } from '@apollo/client';
 import Navbar from '../components/Navbar';
-import ActivityCard, { type Activity } from '../components/ActivityCard'; // Import ActivityCard and type
+import Footer from '../components/Footer';
+import ActivityCard, { type Activity } from '../components/ActivityCard';
 import { SlidersHorizontal, Loader } from 'lucide-react';
 
 const SEARCH_ACTIVITIES = gql`
@@ -76,13 +77,13 @@ const SearchResults: React.FC = () => {
     const ratings = [3, 4, 4.5];
 
     return (
-        <div className="bg-gray-50 min-h-screen font-sans text-[#222222]">
+        <div className="bg-white min-h-screen font-sans text-[#222222]">
             <Navbar />
 
-            <main className="max-w-[2520px] mx-auto xl:px-20 md:px-10 sm:px-2 px-4 py-8 pt-28">
+            <main className="max-w-[2520px] mx-auto xl:px-20 md:px-10 sm:px-2 px-4 py-8 pt-28 pb-14">
 
                 {/* Advanced Filters Bar */}
-                <div className="flex flex-col gap-4 mb-8 sticky top-20 bg-gray-50 z-30 py-4 border-b border-gray-200 pb-6">
+                <div className="flex flex-col gap-4 mb-8 sticky top-20 bg-white z-30 py-4 border-b border-gray-100 shadow-sm pb-6">
 
                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                         {/* Categories */}
@@ -108,7 +109,7 @@ const SearchResults: React.FC = () => {
                     </div>
 
                     {/* Secondary Filters: Price, City, Rating */}
-                    <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-3">
 
                         {/* City Dropdown Mock */}
                         <div className="relative group">
@@ -165,12 +166,17 @@ const SearchResults: React.FC = () => {
                 </div>
 
                 {/* Results Info */}
-                <div className="mb-6 flex items-center justify-between">
-                    <h1 className="text-lg font-semibold">
-                        {loading ? 'Searching...' :
-                            `${data?.searchActivities?.length || 0} results ${query ? `for "${query}"` : ''}`
-                        }
-                    </h1>
+                <div className="mb-6 flex items-end justify-between gap-4">
+                    <div>
+                        <h1 className="text-[22px] sm:text-[26px] font-semibold leading-tight">
+                            {loading
+                                ? 'Searching…'
+                                : `${data?.searchActivities?.length || 0} result${(data?.searchActivities?.length || 0) === 1 ? '' : 's'}${query ? ` for “${query}”` : ''}`}
+                        </h1>
+                        <div className="text-sm text-neutral-500 mt-1">
+                            Filter by category, city, price, and rating.
+                        </div>
+                    </div>
                 </div>
 
                 {/* Grid */}
@@ -200,6 +206,8 @@ const SearchResults: React.FC = () => {
                 )}
 
             </main>
+
+            <Footer />
         </div>
     );
 };

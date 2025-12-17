@@ -83,6 +83,13 @@ const CreateActivity: React.FC = () => {
                             value={formData.category}
                             onChange={handleChange}
                         >
+                            <option>Camping</option>
+                            <option>Camel Tours</option>
+                            <option>Quad Tours</option>
+                            <option>Buggy Tours</option>
+                            <option>Hiking</option>
+                            <option>Tours</option>
+                            <option>Desert</option>
                             <option>Cultural</option>
                             <option>Nature</option>
                             <option>Adventure</option>

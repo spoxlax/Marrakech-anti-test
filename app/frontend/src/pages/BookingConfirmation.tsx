@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, gql } from '@apollo/client';
 import { CheckCircle, Calendar, Users, MapPin } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const GET_BOOKING = gql`
   query GetBooking($id: ID!) {
@@ -55,10 +56,10 @@ const BookingConfirmation: React.FC = () => {
     const activity = booking.activity || {}; // Fallback if federation fails (though it shouldn't)
 
     return (
-        <div className="min-h-screen bg-gray-50 font-sans text-[#222222]">
+        <div className="min-h-screen bg-white font-sans text-[#222222]">
             <Navbar />
 
-            <main className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+            <main className="max-w-3xl mx-auto px-4 sm:px-6 py-12 pt-28 pb-14">
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
 
                     {/* Header */}
@@ -148,6 +149,8 @@ const BookingConfirmation: React.FC = () => {
                     </div>
                 </div>
             </main>
+
+            <Footer />
         </div>
     );
 };

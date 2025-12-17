@@ -11,6 +11,7 @@ export type Activity = {
     vendorId: string;
     duration: string;
     images?: string[];
+    category?: string;
 };
 
 interface ActivityCardProps {

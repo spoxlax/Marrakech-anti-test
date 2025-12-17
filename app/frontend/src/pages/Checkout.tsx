@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useMutation, gql, useQuery } from '@apollo/client';
 import { ChevronLeft, CreditCard, Star } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const GET_ACTIVITY_AND_USER = gql`
   query GetActivityAndUser($id: ID!) {
@@ -122,13 +123,49 @@ const Checkout: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 font-sans text-[#222222]">
+        <div className="min-h-screen bg-white font-sans text-[#222222]">
             <Navbar />
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-10 py-12">
+            <main className="max-w-[1120px] mx-auto px-4 sm:px-10 py-12 pt-28 pb-14">
                 <div className="flex items-center gap-2 mb-8 text-gray-500 hover:text-gray-800 transition-colors w-max">
                     <ChevronLeft size={20} />
                     <button onClick={() => navigate(-1)} className="font-medium">Back</button>
+                </div>
+
+                <div className="lg:hidden mb-10">
+                    <div className="border border-gray-200 rounded-2xl p-6 bg-white shadow-sm">
+                        <div className="flex gap-4">
+                            <div className="w-20 h-20 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
+                                <img src={activity.images?.[0] || 'https://via.placeholder.com/150'} alt={activity.title} className="w-full h-full object-cover" />
+                            </div>
+                            <div className="min-w-0">
+                                <div className="text-xs text-gray-500 mb-1">Experience hosted by Antigravity</div>
+                                <h2 className="font-semibold text-base text-gray-900 line-clamp-2">{activity.title}</h2>
+                                <div className="flex items-center gap-1 mt-2 text-xs font-semibold">
+                                    <Star size={12} className="fill-black" /> 5.0 <span className="text-gray-400 font-normal">(Mock Reviews)</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="mt-6 pt-6 border-t border-gray-100">
+                            <div className="text-lg font-semibold mb-4">Price details</div>
+                            <div className="space-y-3 text-gray-600">
+                                <div className="flex justify-between">
+                                    <span>${activity.priceAdult} x {adults} adults</span>
+                                    <span>${totalAdultsPrice.toFixed(2)}</span>
+                                </div>
+                                {children > 0 && (
+                                    <div className="flex justify-between">
+                                        <span>${activity.priceChild} x {children} children</span>
+                                        <span>${totalChildrenPrice.toFixed(2)}</span>
+                                    </div>
+                                )}
+                                <div className="flex justify-between text-black font-semibold pt-4 border-t border-gray-100 mt-4">
+                                    <span>Total (USD)</span>
+                                    <span>${totalPrice.toFixed(2)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24">
@@ -330,6 +367,8 @@ const Checkout: React.FC = () => {
                     </div>
                 </div>
             </main>
+
+            <Footer />
         </div>
     );
 };

@@ -40,8 +40,8 @@ const Login: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-black/40 z-50 fixed inset-0">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden relative animate-fade-in-up">
+        <div className="min-h-screen flex items-center justify-center bg-black/50 backdrop-blur-sm z-50 fixed inset-0 px-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[520px] overflow-hidden relative animate-fade-in-up">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-200">
                     <button onClick={() => navigate('/')} className="p-1 hover:bg-gray-100 rounded-full transition">
@@ -52,8 +52,9 @@ const Login: React.FC = () => {
                 </div>
 
                 {/* Body */}
-                <div className="p-6">
-                    <h2 className="text-2xl font-bold mb-6 text-gray-800">Welcome to Airbnb Clone</h2>
+                <div className="p-6 sm:p-8">
+                    <div className="text-[#FF385C] text-sm font-semibold">antigravity</div>
+                    <h2 className="text-2xl font-semibold mt-2 mb-6 text-gray-900">Welcome back</h2>
                     <form className="space-y-4" onSubmit={handleSubmit}>
                         <div className="border border-gray-400 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-black focus-within:border-transparent">
                             <div className="relative border-b border-gray-400">
