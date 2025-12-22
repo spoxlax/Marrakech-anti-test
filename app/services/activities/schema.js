@@ -7,6 +7,7 @@ const typeDefs = gql`
     searchActivities(query: String, category: String, minPrice: Float, maxPrice: Float, city: String, minRating: Float): [Activity]
     searchSuggestions(query: String!): [String]
     myActivities: [Activity]
+    categories: [Category!]!
   }
 
   extend type Mutation {
@@ -14,6 +15,9 @@ const typeDefs = gql`
     updateActivity(id: ID!, input: CreateActivityInput!): Activity
     approveActivity(id: ID!): Activity
     deleteActivity(id: ID!): Boolean
+    createCategory(input: CategoryInput!): Category!
+    updateCategory(id: ID!, input: CategoryInput!): Category!
+    deleteCategory(id: ID!): Boolean!
   }
 
   type Activity @key(fields: "id") {
@@ -32,6 +36,14 @@ const typeDefs = gql`
     status: String # PENDING, APPROVED
   }
 
+  type Category @key(fields: "id") {
+    id: ID!
+    name: String!
+    icon: String
+    order: Int
+    isActive: Boolean!
+  }
+
   input CreateActivityInput {
     title: String!
     description: String!
@@ -42,6 +54,13 @@ const typeDefs = gql`
     category: String!
     city: String
     images: [String]
+  }
+
+  input CategoryInput {
+    name: String!
+    icon: String
+    order: Int
+    isActive: Boolean
   }
 `;
 

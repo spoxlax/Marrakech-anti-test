@@ -11,6 +11,7 @@ const GET_ALL_ACTIVITIES = gql`
       priceAdult
       status
       vendorId
+      images
     }
   }
 `;
@@ -36,6 +37,7 @@ type AdminActivityRow = {
     priceAdult: number;
     status?: string | null;
     vendorId?: string | null;
+    images?: string[] | null;
 };
 
 const AdminActivities: React.FC = () => {
@@ -52,10 +54,31 @@ const AdminActivities: React.FC = () => {
         }
     };
 
-    const handleDelete = async (id: string) => {
+    const handleDelete = async (id: string, images: string[] | null | undefined) => {
         if (window.confirm('Delete this activity permanently?')) {
             try {
+                // 1. Delete Activity from DB
                 await deleteActivity({ variables: { id } });
+
+                // 2. Delete Images from Upload Service
+                if (images && images.length > 0) {
+                    images.forEach(async (url) => {
+                        try {
+                            const filename = url.split('/').pop();
+                            if (filename) {
+                                await fetch('http://localhost:5007/file', {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({ filename })
+                                });
+                            }
+                        } catch (e) {
+                            console.error("Failed to delete image", url, e);
+                        }
+                    });
+                }
                 refetch();
             } catch {
                 alert('Error deleting activity');
@@ -124,7 +147,7 @@ const AdminActivities: React.FC = () => {
                                         <Edit2 size={18} />
                                     </Link>
                                     <button
-                                        onClick={() => handleDelete(activity.id)}
+                                        onClick={() => handleDelete(activity.id, activity.images)}
                                         className="p-2 text-gray-400 hover:text-red-600 transition-colors"
                                         title="Delete"
                                     >

@@ -8,7 +8,7 @@ const { resolvers } = require('./resolvers');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 4006;
+const PORT = process.env.PORT || 5006;
 
 mongoose
   .connect(process.env.MONGO_URI || 'mongodb://localhost:27017/tourism-payments')

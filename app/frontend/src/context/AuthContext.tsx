@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { jwtDecode } from 'jwt-decode';
+import { useApolloClient } from '@apollo/client';
 import { AuthContext } from './authCore';
 import type { User } from './authCore';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const client = useApolloClient();
     const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
     const [user, setUser] = useState<User | null>(() => {
         const storedToken = localStorage.getItem('token');
@@ -34,6 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setToken(null);
         setUser(null);
         localStorage.removeItem('token');
+        client.resetStore().catch(e => console.error("Failed to reset store", e));
     };
 
     return (

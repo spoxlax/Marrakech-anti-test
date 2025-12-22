@@ -6,10 +6,29 @@ const jwt = require('jsonwebtoken');
 const { typeDefs } = require('./schema');
 const { resolvers } = require('./resolvers');
 const Activity = require('./models/Activity');
+const Category = require('./models/Category');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 4002;
+const PORT = process.env.PORT || 5002;
+
+async function seedCategoriesIfEmpty() {
+  const count = await Category.countDocuments();
+  if (count > 0) {
+    return;
+  }
+
+  const categories = [
+    { name: 'Camping', icon: 'tent', order: 10 },
+    { name: 'Camel Tours', icon: 'palmtree', order: 20 },
+    { name: 'Quad Tours', icon: 'mountain', order: 30 },
+    { name: 'Buggy Tours', icon: 'car', order: 40 },
+    { name: 'Hiking', icon: 'mountain', order: 50 },
+    { name: 'Tours', icon: 'camera', order: 60 },
+  ];
+
+  await Category.insertMany(categories);
+}
 
 async function seedActivitiesIfEmpty() {
   const count = await Activity.countDocuments();
@@ -83,6 +102,7 @@ mongoose
   .then(async () => {
     console.log('MongoDB connected');
     try {
+      await seedCategoriesIfEmpty();
       await seedActivitiesIfEmpty();
     } catch (error) {
       console.error('Failed to seed demo activities', error);

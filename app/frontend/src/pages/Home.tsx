@@ -25,21 +25,30 @@ const GET_ACTIVITIES = gql`
   }
 `;
 
+const GET_CATEGORIES = gql`
+  query GetCategories {
+    categories {
+      id
+      name
+      icon
+    }
+  }
+`;
+
 const SEARCH_SUGGESTIONS = gql`
   query SearchSuggestions($query: String!) {
     searchSuggestions(query: $query)
   }
 `;
 
-const categories = [
-    { label: 'All', icon: Grid },
-    { label: 'Camping', icon: Tent },
-    { label: 'Camel Tours', icon: Palmtree },
-    { label: 'Quad Tours', icon: Mountain },
-    { label: 'Buggy Tours', icon: Car },
-    { label: 'Hiking', icon: Mountain },
-    { label: 'Tours', icon: Camera },
-];
+const categoryIconMap: Record<string, React.ComponentType<{ size?: string | number }>> = {
+    Camping: Tent,
+    'Camel Tours': Palmtree,
+    'Quad Tours': Mountain,
+    'Buggy Tours': Car,
+    Hiking: Mountain,
+    Tours: Camera,
+};
 
 const sliderImages = [
     {
@@ -76,12 +85,20 @@ const Home: React.FC = () => {
     const searchBarRef = useRef<HTMLDivElement>(null);
 
     const { loading, error, data } = useQuery(GET_ACTIVITIES);
+    const { data: categoriesData } = useQuery(GET_CATEGORIES);
     const { data: suggestionsData } = useQuery(SEARCH_SUGGESTIONS, {
         variables: { query: whereQuery },
         skip: whereQuery.trim().length < 2,
     });
 
     const activities: Activity[] = data?.activities || [];
+    const categoriesForBar = useMemo(() => {
+        const dynamic = (categoriesData?.categories ?? []).map((c: { name: string }) => ({
+            label: c.name,
+            icon: categoryIconMap[c.name] ?? Grid,
+        }));
+        return [{ label: 'All', icon: Grid }, ...dynamic];
+    }, [categoriesData]);
 
     const filteredActivities = selectedCategory === 'All'
         ? activities
@@ -468,7 +485,7 @@ const Home: React.FC = () => {
             {/* Category Bar */}
             <div className="pb-4 px-4 sm:px-8 max-w-[2520px] mx-auto xl:px-20 md:px-10 sm:px-2 border-b border-gray-100 sticky top-20 bg-white z-40 overflow-x-auto scrollbar-hide shadow-sm">
                 <div className="flex flex-row items-center justify-between overflow-x-auto pt-4 pb-2 min-w-full gap-8">
-                    {categories.map((item) => (
+                    {categoriesForBar.map((item) => (
                         <div
                             key={item.label}
                             onClick={() => setSelectedCategory(item.label)}

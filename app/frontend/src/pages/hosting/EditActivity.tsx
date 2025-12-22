@@ -1,7 +1,25 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, gql } from '@apollo/client';
 import { Upload, X, Loader } from 'lucide-react';
+
+const GET_CATEGORIES = gql`
+  query GetCategories {
+    categories {
+      id
+      name
+    }
+  }
+`;
+
+const CREATE_CATEGORY = gql`
+  mutation CreateCategory($input: CategoryInput!) {
+    createCategory(input: $input) {
+      id
+      name
+    }
+  }
+`;
 
 const GET_ACTIVITY = gql`
   query GetActivity($id: ID!) {
@@ -46,6 +64,8 @@ const EditActivity = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
+    const { data: categoriesData } = useQuery(GET_CATEGORIES);
+
     // Fetch existing data
     const { loading: fetchLoading, error: fetchError } = useQuery<EditActivityQueryData>(GET_ACTIVITY, {
         variables: { id },
@@ -64,10 +84,14 @@ const EditActivity = () => {
                 category: act.category,
                 images: act.images || []
             });
+            setCategoryInput(act.category);
         }
     });
 
     const [updateActivity, { loading: updateLoading }] = useMutation(UPDATE_ACTIVITY);
+    const [createCategory, { loading: creatingCategory }] = useMutation(CREATE_CATEGORY, {
+        refetchQueries: [{ query: GET_CATEGORIES }],
+    });
 
     const [formData, setFormData] = useState({
         title: '',
@@ -79,9 +103,80 @@ const EditActivity = () => {
         category: 'Tours',
         images: [] as string[]
     });
+    const [categoryInput, setCategoryInput] = useState('');
+    const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+    const [highlightedCategoryIndex, setHighlightedCategoryIndex] = useState(-1);
+    const categoryPickerRef = useRef<HTMLDivElement | null>(null);
+
+    const activeCategoryNames = useMemo(() => {
+        return ((categoriesData?.categories ?? []) as Array<{ name: string }>).map((c) => c.name);
+    }, [categoriesData]);
+
+    const selectedCategoryName = useMemo(() => {
+        const trimmed = categoryInput.trim();
+        if (!trimmed) return '';
+        const match = activeCategoryNames.find((n) => n.toLowerCase() === trimmed.toLowerCase());
+        return match || '';
+    }, [activeCategoryNames, categoryInput]);
+
+    const isCategoryValid = activeCategoryNames.length === 0 || selectedCategoryName.length > 0;
+
+    const displayCategoryNames = useMemo(() => {
+        const trimmed = categoryInput.trim();
+        const base = activeCategoryNames;
+        const q = trimmed.toLowerCase();
+        if (!q) return base;
+        const startsWith: string[] = [];
+        const contains: string[] = [];
+        for (const name of base) {
+            const lower = name.toLowerCase();
+            if (lower.startsWith(q)) startsWith.push(name);
+            else if (lower.includes(q)) contains.push(name);
+        }
+        return [...startsWith, ...contains];
+    }, [activeCategoryNames, categoryInput]);
+
+    useEffect(() => {
+        if (!isCategoryOpen) return;
+
+        const handleMouseDown = (ev: MouseEvent) => {
+            const el = categoryPickerRef.current;
+            if (!el) return;
+            if (ev.target instanceof Node && !el.contains(ev.target)) {
+                setIsCategoryOpen(false);
+                setHighlightedCategoryIndex(-1);
+            }
+        };
+
+        document.addEventListener('mousedown', handleMouseDown);
+        return () => document.removeEventListener('mousedown', handleMouseDown);
+    }, [isCategoryOpen]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleSelectCategory = (name: string) => {
+        setCategoryInput(name);
+        setFormData((prev) => ({ ...prev, category: name }));
+        setIsCategoryOpen(false);
+        setHighlightedCategoryIndex(-1);
+    };
+
+    const handleAddCategory = async () => {
+        const name = categoryInput.trim();
+        if (!name) return;
+        const existing = activeCategoryNames.find((n) => n.toLowerCase() === name.toLowerCase());
+        if (existing) {
+            handleSelectCategory(existing);
+            return;
+        }
+        try {
+            await createCategory({ variables: { input: { name } } });
+            handleSelectCategory(name);
+        } catch {
+            return;
+        }
     };
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,7 +191,7 @@ const EditActivity = () => {
             formData.append('file', file);
 
             try {
-                const response = await fetch('http://localhost:4007/upload', {
+                const response = await fetch('http://localhost:5007/upload', {
                     method: 'POST',
                     body: formData,
                 });
@@ -125,6 +220,7 @@ const EditActivity = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            if (activeCategoryNames.length > 0 && !selectedCategoryName) return;
             await updateActivity({
                 variables: {
                     id,
@@ -135,7 +231,7 @@ const EditActivity = () => {
                         priceChild: parseFloat(formData.priceChild),
                         duration: formData.duration,
                         maxParticipants: parseInt(formData.maxParticipants),
-                        category: formData.category,
+                        category: selectedCategoryName || formData.category,
                         images: formData.images
                     }
                 }
@@ -163,21 +259,116 @@ const EditActivity = () => {
                     </div>
                     <div>
                         <label className="block text-sm font-medium mb-1">Category</label>
-                        <select name="category" value={formData.category} onChange={handleChange} className="w-full border p-2 rounded">
-                            <option>Camping</option>
-                            <option>Camel Tours</option>
-                            <option>Quad Tours</option>
-                            <option>Buggy Tours</option>
-                            <option>Hiking</option>
-                            <option>Tours</option>
-                            <option>Desert</option>
-                            <option>Cultural</option>
-                            <option>Nature</option>
-                            <option>Adventure</option>
-                            <option>Food</option>
-                            <option>Sport</option>
-                            <option>Workshops</option>
-                        </select>
+                        <div ref={categoryPickerRef} className="relative">
+                            <input
+                                name="category"
+                                value={categoryInput}
+                                onChange={(e) => {
+                                    const next = e.target.value;
+                                    setCategoryInput(next);
+                                    setIsCategoryOpen(true);
+                                    setHighlightedCategoryIndex(0);
+                                    const trimmed = next.trim();
+                                    const match = activeCategoryNames.find((n) => n.toLowerCase() === trimmed.toLowerCase());
+                                    setFormData((prev) => ({ ...prev, category: match || trimmed }));
+                                }}
+                                onFocus={() => {
+                                    setIsCategoryOpen(true);
+                                    setHighlightedCategoryIndex(0);
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Escape') {
+                                        setIsCategoryOpen(false);
+                                        setHighlightedCategoryIndex(-1);
+                                        return;
+                                    }
+
+                                    if (e.key === 'ArrowDown') {
+                                        e.preventDefault();
+                                        setIsCategoryOpen(true);
+                                        setHighlightedCategoryIndex((prev) => {
+                                            const max = displayCategoryNames.length - 1;
+                                            if (max < 0) return -1;
+                                            return Math.min(prev < 0 ? 0 : prev + 1, max);
+                                        });
+                                        return;
+                                    }
+
+                                    if (e.key === 'ArrowUp') {
+                                        e.preventDefault();
+                                        setIsCategoryOpen(true);
+                                        setHighlightedCategoryIndex((prev) => {
+                                            const max = displayCategoryNames.length - 1;
+                                            if (max < 0) return -1;
+                                            return Math.max((prev < 0 ? max : prev - 1), 0);
+                                        });
+                                        return;
+                                    }
+
+                                    if (e.key === 'Enter') {
+                                        const highlighted = displayCategoryNames[highlightedCategoryIndex];
+                                        const typed = categoryInput.trim();
+                                        if (isCategoryOpen && highlighted) {
+                                            e.preventDefault();
+                                            handleSelectCategory(highlighted);
+                                            return;
+                                        }
+                                        if (!selectedCategoryName && typed.length > 0) {
+                                            e.preventDefault();
+                                            handleAddCategory();
+                                        }
+                                    }
+                                }}
+                                className="w-full border p-2 rounded"
+                                placeholder="Type to search or add a category"
+                            />
+                            {isCategoryOpen && (displayCategoryNames.length > 0 || categoryInput.trim().length > 0) && (
+                                <div className="absolute z-50 mt-2 w-full rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden">
+                                    <div className="max-h-72 overflow-auto">
+                                        {displayCategoryNames.length === 0 ? (
+                                            <div className="px-4 py-3 text-sm text-gray-500">
+                                                No matching categories.
+                                            </div>
+                                        ) : (
+                                            displayCategoryNames.map((name, index) => (
+                                                <button
+                                                    key={name}
+                                                    type="button"
+                                                    onMouseDown={(ev) => {
+                                                        ev.preventDefault();
+                                                        handleSelectCategory(name);
+                                                    }}
+                                                    onMouseEnter={() => setHighlightedCategoryIndex(index)}
+                                                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-neutral-50 ${index === highlightedCategoryIndex ? 'bg-neutral-50' : ''}`}
+                                                >
+                                                    {name}
+                                                </button>
+                                            ))
+                                        )}
+                                    </div>
+                                    {!selectedCategoryName && categoryInput.trim().length > 0 && (
+                                        <div className="border-t border-gray-100 p-2">
+                                            <button
+                                                type="button"
+                                                onMouseDown={(ev) => {
+                                                    ev.preventDefault();
+                                                    handleAddCategory();
+                                                }}
+                                                disabled={creatingCategory}
+                                                className="w-full px-4 py-2.5 rounded-lg bg-black text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50"
+                                            >
+                                                {creatingCategory ? 'Adding…' : `Add "${categoryInput.trim()}"`}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                        {!isCategoryValid && (
+                            <div className="mt-2 text-xs text-red-600">
+                                Select an existing category or add it first.
+                            </div>
+                        )}
                     </div>
                     <div className="md:col-span-2">
                         <label className="block text-sm font-medium mb-1">Description</label>
@@ -223,7 +414,7 @@ const EditActivity = () => {
 
                 <div className="flex gap-4 pt-4 border-t">
                     <button type="button" onClick={() => navigate(-1)} className="px-6 py-2 border rounded hover:bg-gray-50">Cancel</button>
-                    <button type="submit" disabled={updateLoading} className="px-6 py-2 bg-black text-white rounded hover:opacity-90 disabled:opacity-50">
+                    <button type="submit" disabled={updateLoading || !isCategoryValid} className="px-6 py-2 bg-black text-white rounded hover:opacity-90 disabled:opacity-50">
                         {updateLoading ? 'Saving...' : 'Save Changes'}
                     </button>
                 </div>

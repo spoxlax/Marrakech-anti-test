@@ -1,4 +1,5 @@
 const Activity = require('./models/Activity');
+const Category = require('./models/Category');
 
 const resolvers = {
   Query: {
@@ -7,6 +8,9 @@ const resolvers = {
     },
     activity: async (_, { id }) => {
       return await Activity.findById(id);
+    },
+    categories: async () => {
+      return await Category.find({ isActive: true }).sort({ order: 1, name: 1 });
     },
     searchActivities: async (_, { query, category, minPrice, maxPrice, city, minRating }) => {
       const filter = {};
@@ -62,9 +66,70 @@ const resolvers = {
     },
   },
   Mutation: {
+    createCategory: async (_, { input }, { user }) => {
+      if (!user || (user.role !== 'vendor' && user.role !== 'admin')) {
+        throw new Error('Unauthorized');
+      }
+      const category = new Category({
+        name: input.name,
+        icon: input.icon || '',
+        order: typeof input.order === 'number' ? input.order : 0,
+        isActive: input.isActive !== false,
+        createdBy: user.userId,
+        createdByRole: user.role,
+      });
+      await category.save();
+      return category;
+    },
+    updateCategory: async (_, { id, input }, { user }) => {
+      if (!user || (user.role !== 'vendor' && user.role !== 'admin')) {
+        throw new Error('Unauthorized');
+      }
+      const category = await Category.findById(id);
+      if (!category) throw new Error('Category not found');
+
+      if (user.role !== 'admin') {
+        if (!category.createdBy || category.createdBy.toString() !== user.userId) {
+          throw new Error('Forbidden');
+        }
+      }
+
+      category.name = input.name;
+      category.icon = input.icon || '';
+      if (typeof input.order === 'number') {
+        category.order = input.order;
+      }
+      if (typeof input.isActive === 'boolean') {
+        category.isActive = input.isActive;
+      }
+      await category.save();
+      return category;
+    },
+    deleteCategory: async (_, { id }, { user }) => {
+      if (!user || (user.role !== 'vendor' && user.role !== 'admin')) {
+        throw new Error('Unauthorized');
+      }
+      const category = await Category.findById(id);
+      if (!category) return false;
+
+      if (user.role !== 'admin') {
+        if (!category.createdBy || category.createdBy.toString() !== user.userId) {
+          throw new Error('Forbidden');
+        }
+      }
+
+      category.isActive = false;
+      await category.save();
+      return true;
+    },
     createActivity: async (_, { input }, { user }) => {
       if (!user || (user.role !== 'vendor' && user.role !== 'admin')) {
         throw new Error('Unauthorized');
+      }
+      const hasCategories = await Category.exists({});
+      if (hasCategories) {
+        const valid = await Category.findOne({ name: input.category, isActive: true }).select('_id');
+        if (!valid) throw new Error('Invalid category');
       }
       const activity = new Activity({
         ...input,
@@ -83,6 +148,12 @@ const resolvers = {
       // Admin or Owner check
       if (user.role !== 'admin' && activity.vendorId.toString() !== user.userId) {
         throw new Error('Forbidden');
+      }
+
+      const hasCategories = await Category.exists({});
+      if (hasCategories) {
+        const valid = await Category.findOne({ name: input.category, isActive: true }).select('_id');
+        if (!valid) throw new Error('Invalid category');
       }
 
       Object.assign(activity, input);
@@ -114,6 +185,11 @@ const resolvers = {
   Activity: {
     __resolveReference(activityReference) {
       return Activity.findById(activityReference.id);
+    },
+  },
+  Category: {
+    __resolveReference(categoryReference) {
+      return Category.findById(categoryReference.id);
     },
   },
 };

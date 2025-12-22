@@ -15,6 +15,12 @@ const MY_ACTIVITIES = gql`
   }
 `;
 
+const DELETE_ACTIVITY = gql`
+  mutation DeleteActivity($id: ID!) {
+    deleteActivity(id: $id)
+  }
+`;
+
 type HostingActivityRow = {
     id: string;
     title: string;
@@ -25,11 +31,46 @@ type HostingActivityRow = {
 
 const HostingActivities: React.FC = () => {
     const { loading, error, data } = useQuery(MY_ACTIVITIES);
+    const [deleteActivity] = useMutation(DELETE_ACTIVITY, {
+        refetchQueries: [{ query: MY_ACTIVITIES }]
+    });
 
     if (loading) return <div className="p-8">Loading your listings...</div>;
     if (error) return <div className="p-8 text-red-500">Error: {error.message} (Are you logged in as an Admin/Vendor?)</div>;
 
     const activities: HostingActivityRow[] = data?.myActivities || [];
+
+    const handleDelete = async (id: string, images: string[] | null | undefined) => {
+        if (!window.confirm('Are you sure you want to delete this listing? This action cannot be undone.')) return;
+
+        try {
+            // 1. Delete Activity from DB
+            await deleteActivity({ variables: { id } });
+
+            // 2. Delete Images from Upload Service
+            if (images && images.length > 0) {
+                images.forEach(async (url) => {
+                    try {
+                        const filename = url.split('/').pop();
+                        if (filename) {
+                            await fetch('http://localhost:5007/file', {
+                                method: 'DELETE',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ filename })
+                            });
+                        }
+                    } catch (e) {
+                        console.error("Failed to delete image", url, e);
+                    }
+                });
+            }
+        } catch (err) {
+            console.error("Failed to delete activity", err);
+            alert("Failed to delete activity");
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -50,7 +91,7 @@ const HostingActivities: React.FC = () => {
                     </Link>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {activities.map((activity) => (
                         <div key={activity.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm group">
                             <div className="aspect-[4/3] bg-gray-100 relative">
@@ -75,7 +116,10 @@ const HostingActivities: React.FC = () => {
                                     <Link to={`/hosting/activities/edit/${activity.id}`} className="text-sm font-medium text-gray-600 hover:text-gray-900 flex items-center gap-1">
                                         <Edit2 size={16} /> Edit
                                     </Link>
-                                    <button className="text-sm font-medium text-red-500 hover:text-red-700 flex items-center gap-1">
+                                    <button
+                                        onClick={() => handleDelete(activity.id, activity.images)}
+                                        className="text-sm font-medium text-red-500 hover:text-red-700 flex items-center gap-1"
+                                    >
                                         <Trash2 size={16} /> Delete
                                     </button>
                                 </div>

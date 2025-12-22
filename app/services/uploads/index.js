@@ -6,7 +6,7 @@ const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 4007;
+const PORT = process.env.PORT || 5007;
 
 app.use(cors());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -35,6 +35,20 @@ app.post('/upload', upload.single('file'), (req, res) => {
   }
   const fileUrl = `http://localhost:${PORT}/uploads/${req.file.filename}`;
   res.json({ url: fileUrl });
+});
+
+app.delete('/file', express.json(), (req, res) => {
+  const { filename } = req.body;
+  if (!filename) {
+    return res.status(400).send('Filename is required.');
+  }
+  const filePath = path.join(uploadDir, filename);
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+    res.send('File deleted.');
+  } else {
+    res.status(404).send('File not found.');
+  }
 });
 
 app.listen(PORT, () => {

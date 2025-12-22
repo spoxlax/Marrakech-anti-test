@@ -6,6 +6,15 @@ import Footer from '../components/Footer';
 import ActivityCard, { type Activity } from '../components/ActivityCard';
 import { SlidersHorizontal, Loader } from 'lucide-react';
 
+const GET_CATEGORIES = gql`
+  query GetCategories {
+    categories {
+      id
+      name
+    }
+  }
+`;
+
 const SEARCH_ACTIVITIES = gql`
   query SearchActivities($query: String, $category: String, $minPrice: Float, $maxPrice: Float, $city: String, $minRating: Float) {
     searchActivities(query: $query, category: $category, minPrice: $minPrice, maxPrice: $maxPrice, city: $city, minRating: $minRating) {
@@ -30,6 +39,7 @@ const SearchResults: React.FC = () => {
     const minPrice = params.get('minPrice') || '';
     const maxPrice = params.get('maxPrice') || '';
 
+    const { data: categoriesData } = useQuery(GET_CATEGORIES);
     const { data, loading, error } = useQuery(SEARCH_ACTIVITIES, {
         variables: {
             query: query || undefined,
@@ -56,7 +66,10 @@ const SearchResults: React.FC = () => {
         navigate('/search');
     };
 
-    const categories = ['All', 'Cultural', 'Nature', 'Adventure', 'Food', 'Sport'];
+    const categories = [
+        'All',
+        ...((categoriesData?.categories ?? []) as Array<{ name: string }>).map((c) => c.name),
+    ];
     const cities = ['All', 'Marrakech', 'Essaouira', 'Agafay', 'Atlas Mountains'];
     const ratings = [3, 4, 4.5];
 
