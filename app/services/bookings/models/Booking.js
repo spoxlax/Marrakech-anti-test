@@ -41,6 +41,12 @@ const bookingSchema = new mongoose.Schema({
     enum: ['CARD', 'CASH'],
     default: 'CARD',
   },
+  confirmationCode: {
+    type: String,
+    unique: true,
+    required: true,
+    index: true,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

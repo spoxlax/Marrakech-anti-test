@@ -13,6 +13,7 @@ const GET_BOOKING = gql`
       status
       totalPrice
       paymentMethod
+      confirmationCode
       persons {
         adults
         children
@@ -76,8 +77,7 @@ const BookingConfirmation: React.FC = () => {
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-100 pb-8 mb-8 gap-4">
                             <div>
                                 <div className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Confirmation Code</div>
-                                <div className="text-xl font-mono bg-gray-100 px-3 py-1 rounded inline-block">{booking.id.toUpperCase().slice(-6)}</div>
-                                <div className="text-xs text-gray-400 mt-1">Full ID: {booking.id}</div>
+                                <div className="text-xl font-mono bg-gray-100 px-3 py-1 rounded inline-block">{booking.confirmationCode || booking.id.toUpperCase().slice(-6)}</div>
                             </div>
                             <div className="text-right sm:text-left">
                                 <div className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Total Paid</div>

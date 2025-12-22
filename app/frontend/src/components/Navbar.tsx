@@ -1,11 +1,12 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../context/authCore';
 import { Menu, User, Globe } from 'lucide-react';
 
 const Navbar: React.FC = () => {
     const { user, logout } = useAuth();
+    const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     return (
@@ -21,9 +22,20 @@ const Navbar: React.FC = () => {
                     {/* User Menu */}
                     <div className="relative">
                         <div className="flex flex-row items-center gap-3">
-                            <Link to="/hosting" className="hidden md:block text-sm font-semibold py-3 px-4 rounded-full hover:bg-neutral-100 transition cursor-pointer">
+                            <div
+                                onClick={() => {
+                                    if (user?.role === 'admin') {
+                                        navigate('/admin');
+                                    } else if (user?.role === 'vendor') {
+                                        navigate('/hosting');
+                                    } else {
+                                        navigate('/login');
+                                    }
+                                }}
+                                className="hidden md:block text-sm font-semibold py-3 px-4 rounded-full hover:bg-neutral-100 transition cursor-pointer"
+                            >
                                 Switch to hosting
-                            </Link>
+                            </div>
                             <div className="hidden md:block text-sm font-semibold py-3 px-4 rounded-full hover:bg-neutral-100 transition cursor-pointer">
                                 <Globe size={18} />
                             </div>
@@ -48,7 +60,12 @@ const Navbar: React.FC = () => {
                                             <div className="px-4 py-3 hover:bg-neutral-100 font-semibold cursor-default">
                                                 Welcome, {user.firstName}
                                             </div>
-                                            <Link to="/hosting/bookings" className="px-4 py-3 hover:bg-neutral-100">My Trips</Link>
+                                            {user.role === 'vendor' && (
+                                                <Link to="/hosting/bookings" className="px-4 py-3 hover:bg-neutral-100">My Trips</Link>
+                                            )}
+                                            {user.role === 'admin' && (
+                                                <Link to="/admin" className="px-4 py-3 hover:bg-neutral-100">Admin Dashboard</Link>
+                                            )}
                                             <Link to="/saved" className="px-4 py-3 hover:bg-neutral-100">Wishlists</Link>
                                             <hr />
                                             <div onClick={logout} className="px-4 py-3 hover:bg-neutral-100 text-red-500">

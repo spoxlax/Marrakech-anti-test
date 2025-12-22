@@ -5,6 +5,7 @@ const typeDefs = gql`
     booking(id: ID!): Booking
     myBookings: [Booking]
     vendorBookings: [Booking]
+    allBookings(filter: String, search: String): [Booking]
   }
 
   extend type Mutation {
@@ -23,10 +24,16 @@ const typeDefs = gql`
     totalPrice: Float!
     status: String!
     paymentMethod: String
+    confirmationCode: String
     activity: Activity
+    vendor: User
   }
 
   extend type Activity @key(fields: "id") {
+    id: ID! @external
+  }
+
+  extend type User @key(fields: "id") {
     id: ID! @external
   }
 
