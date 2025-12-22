@@ -83,9 +83,6 @@ const AdminBookings: React.FC = () => {
         }
     };
 
-    if (loading) return <div className="p-8">Loading booking data...</div>;
-    if (error) return <div className="p-8 text-red-500">Error loading bookings: {error.message}</div>;
-
     let bookings: AdminBookingRow[] = data?.allBookings || [];
 
     // Client-side filtering for vendor role since it's a resolved field
@@ -113,6 +110,7 @@ const AdminBookings: React.FC = () => {
                             className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm w-full sm:w-64 focus:ring-2 focus:ring-black focus:outline-none"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
+                            autoFocus
                         />
                     </div>
 
@@ -133,63 +131,71 @@ const AdminBookings: React.FC = () => {
             </div>
 
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
-                            <th className="px-6 py-4">Code</th>
-                            <th className="px-6 py-4">Activity</th>
-                            <th className="px-6 py-4">Guest</th>
-                            <th className="px-6 py-4">Date</th>
-                            <th className="px-6 py-4">Status</th>
-                            <th className="px-6 py-4">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {bookings.map((booking) => (
-                            <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-6 py-4 font-mono text-xs font-medium text-gray-500">
-                                    {booking.confirmationCode || '-'}
-                                </td>
-                                <td className="px-6 py-4 font-medium text-gray-900">
-                                    {booking.activity?.title || 'Unknown Activity'}
-                                    <div className="text-xs text-gray-400 mt-1">
-                                        by {booking.vendor?.role || 'unknown'}
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="font-medium text-gray-900">
-                                        {booking.customerInfo?.firstName || 'Guest'} {booking.customerInfo?.lastName || ''}
-                                    </div>
-                                    <div className="text-xs text-gray-500">{booking.customerInfo?.email}</div>
-                                    <div className="text-xs text-gray-500">{booking.customerInfo?.phone}</div>
-                                </td>
-                                <td className="px-6 py-4 text-gray-600">{booking.date}</td>
-                                <td className="px-6 py-4">
-                                    <select
-                                        value={booking.status}
-                                        onChange={(e) => handleStatusChange(booking.id, e.target.value)}
-                                        className={`text-xs font-medium px-2 py-1 rounded-full border-none focus:ring-2 focus:ring-black cursor-pointer
-                                            ${booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                                                booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                                    booking.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}
-                                        `}
-                                    >
-                                        <option value="pending">Pending</option>
-                                        <option value="confirmed">Confirmed</option>
-                                        <option value="cancelled">Cancelled</option>
-                                        <option value="completed">Completed</option>
-                                    </select>
-                                </td>
-                                <td className="px-6 py-4 font-medium text-gray-900">${booking.totalPrice}</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-                {bookings.length === 0 && (
-                    <div className="p-12 text-center text-gray-500 text-sm flex flex-col items-center gap-2">
-                        <CalendarCheck size={40} className="text-gray-300" />
-                        <p>No bookings found.</p>
-                    </div>
+                {loading && bookings.length === 0 ? (
+                    <div className="p-12 text-center text-gray-500 text-sm">Loading booking data...</div>
+                ) : error ? (
+                    <div className="p-12 text-center text-red-500 text-sm">Error loading bookings: {error.message}</div>
+                ) : (
+                    <>
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
+                                    <th className="px-6 py-4">Code</th>
+                                    <th className="px-6 py-4">Activity</th>
+                                    <th className="px-6 py-4">Guest</th>
+                                    <th className="px-6 py-4">Date</th>
+                                    <th className="px-6 py-4">Status</th>
+                                    <th className="px-6 py-4">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {bookings.map((booking) => (
+                                    <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-6 py-4 font-mono text-xs font-medium text-gray-500">
+                                            {booking.confirmationCode || '-'}
+                                        </td>
+                                        <td className="px-6 py-4 font-medium text-gray-900">
+                                            {booking.activity?.title || 'Unknown Activity'}
+                                            <div className="text-xs text-gray-400 mt-1">
+                                                by {booking.vendor?.role || 'unknown'}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="font-medium text-gray-900">
+                                                {booking.customerInfo?.firstName || 'Guest'} {booking.customerInfo?.lastName || ''}
+                                            </div>
+                                            <div className="text-xs text-gray-500">{booking.customerInfo?.email}</div>
+                                            <div className="text-xs text-gray-500">{booking.customerInfo?.phone}</div>
+                                        </td>
+                                        <td className="px-6 py-4 text-gray-600">{booking.date}</td>
+                                        <td className="px-6 py-4">
+                                            <select
+                                                value={booking.status}
+                                                onChange={(e) => handleStatusChange(booking.id, e.target.value)}
+                                                className={`text-xs font-medium px-2 py-1 rounded-full border-none focus:ring-2 focus:ring-black cursor-pointer
+                                                    ${booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                                        booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                                            booking.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}
+                                                `}
+                                            >
+                                                <option value="pending">Pending</option>
+                                                <option value="confirmed">Confirmed</option>
+                                                <option value="cancelled">Cancelled</option>
+                                                <option value="completed">Completed</option>
+                                            </select>
+                                        </td>
+                                        <td className="px-6 py-4 font-medium text-gray-900">${booking.totalPrice}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        {bookings.length === 0 && (
+                            <div className="p-12 text-center text-gray-500 text-sm flex flex-col items-center gap-2">
+                                <CalendarCheck size={40} className="text-gray-300" />
+                                <p>No bookings found.</p>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </div>
