@@ -1,4 +1,5 @@
-﻿import React, { useMemo } from 'react';
+const fs = require('fs');
+const content = `import React, { useMemo } from 'react';
 import { useQuery, gql } from '@apollo/client';
 import {
   Users,
@@ -51,7 +52,7 @@ interface DashboardData {
 }
 
 // GraphQL Query to fetch all necessary data
-const GET_DASHBOARD_DATA = gql`
+const GET_DASHBOARD_DATA = gql\`
   query GetDashboardData {
     users {
       id
@@ -74,7 +75,7 @@ const GET_DASHBOARD_DATA = gql`
       }
     }
   }
-`;
+\`;
 
 const COLORS = ['#FF5A5F', '#00A699', '#FC642D', '#484848'];
 
@@ -159,7 +160,7 @@ const AdminDashboard: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           label="Total Revenue"
-          value={`$${stats?.totalRevenue.toLocaleString()}`}
+          value={\`$\${stats?.totalRevenue.toLocaleString()}\`}
           icon={DollarSign}
           color="text-rose-600"
           bg="bg-rose-50"
@@ -174,7 +175,7 @@ const AdminDashboard: React.FC = () => {
         <StatCard
           label="Active Activities"
           value={stats?.totalActivities.toString() || '0'}
-          subValue={`${stats?.pendingActivities} Pending`}
+          subValue={\`\${stats?.pendingActivities} Pending\`}
           icon={MapIcon}
           color="text-blue-600"
           bg="bg-blue-50"
@@ -182,7 +183,7 @@ const AdminDashboard: React.FC = () => {
         <StatCard
           label="Total Users"
           value={stats?.totalUsers.toString() || '0'}
-          subValue={`${stats?.vendors} Vendors`}
+          subValue={\`\${stats?.vendors} Vendors\`}
           icon={Users}
           color="text-purple-600"
           bg="bg-purple-50"
@@ -209,11 +210,11 @@ const AdminDashboard: React.FC = () => {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: '#9CA3AF', fontSize: 12 }}
-                  tickFormatter={(value: number) => `$${value}`}
+                  tickFormatter={(value: number) => \`$\${value}\`}
                 />
                 <Tooltip
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                  formatter={(value: any) => [`$${value}`, 'Revenue']}
+                  formatter={(value: any) => [\`$\${value}\`, 'Revenue']}
                 />
                 <Line
                   type="monotone"
@@ -244,7 +245,7 @@ const AdminDashboard: React.FC = () => {
                   dataKey="value"
                 >
                   {chartsData?.statusData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={\`cell-\${index}\`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -284,7 +285,7 @@ const AdminDashboard: React.FC = () => {
                     </div>
                     <div>
                       <p className="font-medium text-gray-900 text-sm">{activity.title}</p>
-                      <p className="text-xs text-gray-500">${activity.priceAdult} / person</p>
+                      <p className="text-xs text-gray-500">\${activity.priceAdult} / person</p>
                     </div>
                   </div>
                   <span className="text-xs font-medium text-yellow-600 bg-yellow-50 px-2 py-1 rounded-full">
@@ -325,14 +326,14 @@ const AdminDashboard: React.FC = () => {
                       <div>
                         <p className="font-medium text-gray-900 text-sm">{booking.activity?.title || 'Unknown Activity'}</p>
                         <p className="text-xs text-gray-500">
-                          {bookingDate.toLocaleDateString()}  ${booking.totalPrice}
+                          {bookingDate.toLocaleDateString()} • \${booking.totalPrice}
                         </p>
                       </div>
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded-full ${booking.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' :
+                    <span className={\`text-xs px-2 py-1 rounded-full \${booking.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' :
                       booking.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
                         'bg-gray-100 text-gray-700'
-                      }`}>
+                      }\`}>
                       {booking.status}
                     </span>
                   </div>
@@ -372,10 +373,13 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, subValue, icon: Icon,
         </p>
       )}
     </div>
-    <div className={`p-3 rounded-lg ${bg} ${color}`}>
+    <div className={\`p-3 rounded-lg \${bg} \${color}\`}>
       <Icon size={24} />
     </div>
   </div>
 );
 
 export default AdminDashboard;
+`;
+
+fs.writeFileSync('src/pages/admin/AdminDashboard.tsx', content);

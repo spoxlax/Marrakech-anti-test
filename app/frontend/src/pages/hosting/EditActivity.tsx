@@ -88,7 +88,9 @@ const EditActivity = () => {
         }
     });
 
-    const [updateActivity, { loading: updateLoading }] = useMutation(UPDATE_ACTIVITY);
+    const [updateActivity, { loading: updateLoading }] = useMutation(UPDATE_ACTIVITY, {
+        refetchQueries: ['GetActivities', 'MyActivities']
+    });
     const [createCategory, { loading: creatingCategory }] = useMutation(CREATE_CATEGORY, {
         refetchQueries: [{ query: GET_CATEGORIES }],
     });

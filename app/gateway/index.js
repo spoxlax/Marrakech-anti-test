@@ -1,8 +1,12 @@
-const { ApolloServer } = require('apollo-server');
+const express = require('express');
+const { ApolloServer } = require('apollo-server-express');
 const { ApolloGateway, IntrospectAndCompose, RemoteGraphQLDataSource } = require('@apollo/gateway');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
+const helmet = require('helmet');
+const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 
 // Manual dotenv loading
 const dotenvPath = path.resolve(__dirname, '.env');
@@ -17,17 +21,15 @@ if (fs.existsSync(dotenvPath)) {
   }
 }
 
-// Fallback for critical variables if dotenv failed
+// Critical Security Check
 if (!process.env.JWT_SECRET) {
-  console.warn('JWT_SECRET not found in environment, using default.');
-  process.env.JWT_SECRET = 'supersecretkey123';
+  console.error("FATAL: JWT_SECRET is not defined. Exiting.");
+  process.exit(1);
 }
-if (!process.env.PORT) {
-  process.env.PORT = '5000';
-}
+
+const PORT = process.env.PORT || 5000;
 
 console.log('Gateway starting...');
-
 
 const gateway = new ApolloGateway({
   supergraphSdl: new IntrospectAndCompose({
@@ -51,31 +53,52 @@ const gateway = new ApolloGateway({
     }),
 });
 
-const server = new ApolloServer({
-  gateway,
-  subscriptions: false,
-  context: ({ req }) => {
-    const authHeader = req.headers.authorization || '';
-    let user = null;
-    if (authHeader.startsWith('Bearer ')) {
-      const token = authHeader.replace('Bearer ', '');
-      try {
-        if (!process.env.JWT_SECRET) {
-          console.error("FATAL: JWT_SECRET is not defined.");
-          throw new Error("Misconfiguration");
+async function startServer() {
+  const app = express();
+
+  // Security Middleware
+  app.use(helmet({
+    contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false, // Allow GraphQL Playground in dev
+    crossOriginEmbedderPolicy: false,
+  }));
+  
+  app.use(cors()); // Configure strict CORS in production
+
+  // Rate Limiting
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again later.'
+  });
+  app.use(limiter);
+
+  const server = new ApolloServer({
+    gateway,
+    subscriptions: false, // Apollo Gateway doesn't support subscriptions by default in v3
+    context: ({ req }) => {
+      const authHeader = req.headers.authorization || '';
+      let user = null;
+      if (authHeader.startsWith('Bearer ')) {
+        const token = authHeader.replace('Bearer ', '');
+        try {
+          user = jwt.verify(token, process.env.JWT_SECRET);
+        } catch (e) {
+          user = null;
         }
-        user = jwt.verify(token, process.env.JWT_SECRET);
-      } catch (e) {
-        user = null;
+        return { token: authHeader, user };
       }
       return { token: authHeader, user };
-    }
-    return { token: authHeader, user };
-  },
-});
+    },
+  });
 
-const PORT = process.env.PORT || 5000;
+  await server.start();
+  server.applyMiddleware({ app });
 
-server.listen({ port: PORT }).then(({ url }) => {
-  console.log(`🚀 Gateway ready at ${url}`);
+  app.listen(PORT, () => {
+    console.log(`🚀 Gateway ready at http://localhost:${PORT}${server.graphqlPath}`);
+  });
+}
+
+startServer().catch(err => {
+  console.error(err);
 });

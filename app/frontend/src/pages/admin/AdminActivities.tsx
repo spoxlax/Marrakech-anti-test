@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, gql } from '@apollo/client';
 import { Link } from 'react-router-dom';
 import { Check, Edit2, Trash2, Clock, Plus } from 'lucide-react';
+import ConfirmModal from '../../components/ConfirmModal';
 
 const GET_ALL_ACTIVITIES = gql`
   query GetActivities {
@@ -44,6 +45,7 @@ const AdminActivities: React.FC = () => {
     const { loading, error, data, refetch } = useQuery(GET_ALL_ACTIVITIES);
     const [approveActivity] = useMutation(APPROVE_ACTIVITY);
     const [deleteActivity] = useMutation(DELETE_ACTIVITY);
+    const [deleteId, setDeleteId] = useState<string | null>(null);
 
     const handleApprove = async (id: string) => {
         try {
@@ -54,35 +56,16 @@ const AdminActivities: React.FC = () => {
         }
     };
 
-    const handleDelete = async (id: string, images: string[] | null | undefined) => {
-        if (window.confirm('Delete this activity permanently?')) {
-            try {
-                // 1. Delete Activity from DB
-                await deleteActivity({ variables: { id } });
-
-                // 2. Delete Images from Upload Service
-                if (images && images.length > 0) {
-                    images.forEach(async (url) => {
-                        try {
-                            const filename = url.split('/').pop();
-                            if (filename) {
-                                await fetch('http://localhost:5007/file', {
-                                    method: 'DELETE',
-                                    headers: {
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({ filename })
-                                });
-                            }
-                        } catch (e) {
-                            console.error("Failed to delete image", url, e);
-                        }
-                    });
-                }
-                refetch();
-            } catch {
-                alert('Error deleting activity');
-            }
+    const confirmDelete = async () => {
+        if (!deleteId) return;
+        try {
+            // Delete Activity from DB (Backend handles image deletion now)
+            await deleteActivity({ variables: { id: deleteId } });
+            refetch();
+        } catch {
+            alert('Error deleting activity');
+        } finally {
+            setDeleteId(null);
         }
     };
 
@@ -147,7 +130,7 @@ const AdminActivities: React.FC = () => {
                                         <Edit2 size={18} />
                                     </Link>
                                     <button
-                                        onClick={() => handleDelete(activity.id, activity.images)}
+                                        onClick={() => setDeleteId(activity.id)}
                                         className="p-2 text-gray-400 hover:text-red-600 transition-colors"
                                         title="Delete"
                                     >
@@ -164,6 +147,16 @@ const AdminActivities: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            <ConfirmModal
+                isOpen={!!deleteId}
+                onClose={() => setDeleteId(null)}
+                onConfirm={confirmDelete}
+                title="Delete Activity"
+                message="Are you sure you want to delete this activity? This action cannot be undone and will permanently remove the activity and all associated images."
+                confirmText="Delete Permanently"
+                isDangerous={true}
+            />
         </div>
     );
 };

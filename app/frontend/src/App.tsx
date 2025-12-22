@@ -1,68 +1,77 @@
 import { Routes, Route } from 'react-router-dom';
-import Home from './pages/Home';
-import SearchResults from './pages/SearchResults';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import About from './pages/About';
-import Contact from './pages/Contact';
-import Booking from './pages/Booking';
-import Checkout from './pages/Checkout';
-import BookingConfirmation from './pages/BookingConfirmation';
-import AdminLayout from './layouts/AdminLayout';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminUsers from './pages/admin/AdminUsers';
-import AdminActivities from './pages/admin/AdminActivities';
-import AdminBookings from './pages/admin/AdminBookings';
+import React, { Suspense, lazy } from 'react';
+import LoadingSpinner from './components/LoadingSpinner';
 
-// Hosting
-import HostingLayout from './layouts/HostingLayout';
-import HostingDashboard from './pages/hosting/HostingDashboard';
-import HostingActivities from './pages/hosting/HostingActivities';
-import CreateActivity from './pages/hosting/CreateActivity';
-import EditActivity from './pages/hosting/EditActivity';
-import HostingBookings from './pages/hosting/HostingBookings';
+// Lazy load pages
+const Home = lazy(() => import('./pages/Home'));
+const SearchResults = lazy(() => import('./pages/SearchResults'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const About = lazy(() => import('./pages/About'));
+const Contact = lazy(() => import('./pages/Contact'));
+const Booking = lazy(() => import('./pages/Booking'));
+const Checkout = lazy(() => import('./pages/Checkout'));
+const BookingConfirmation = lazy(() => import('./pages/BookingConfirmation'));
+
+// Admin Pages
+const AdminLayout = lazy(() => import('./layouts/AdminLayout'));
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
+const AdminActivities = lazy(() => import('./pages/admin/AdminActivities'));
+const AdminBookings = lazy(() => import('./pages/admin/AdminBookings'));
+
+// Hosting Pages
+const HostingLayout = lazy(() => import('./layouts/HostingLayout'));
+const HostingDashboard = lazy(() => import('./pages/hosting/HostingDashboard'));
+const HostingActivities = lazy(() => import('./pages/hosting/HostingActivities'));
+const CreateActivity = lazy(() => import('./pages/hosting/CreateActivity'));
+const EditActivity = lazy(() => import('./pages/hosting/EditActivity'));
+const HostingBookings = lazy(() => import('./pages/hosting/HostingBookings'));
+
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/search" element={<SearchResults />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/about" element={<About />} />
-      <Route path="/contact" element={<Contact />} />
-      <Route path="/activities/:id/book" element={<Booking />} />
-      <Route path="/checkout" element={<Checkout />} />
-      <Route path="/booking/success/:id" element={<BookingConfirmation />} />
+    <Suspense fallback={<LoadingSpinner />}>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/search" element={<SearchResults />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/activities/:id/book" element={<Booking />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/booking/success/:id" element={<BookingConfirmation />} />
 
-      {/* Admin Routes */}
-      <Route path="/admin" element={
-        <ProtectedRoute allowedRoles={['admin']}>
-          <AdminLayout />
-        </ProtectedRoute>
-      }>
-        <Route index element={<AdminDashboard />} />
-        <Route path="users" element={<AdminUsers />} />
-        <Route path="activities" element={<AdminActivities />} />
-        <Route path="activities/create" element={<CreateActivity />} />
-        <Route path="activities/edit/:id" element={<EditActivity />} />
-        <Route path="bookings" element={<AdminBookings />} />
-      </Route>
+        {/* Admin Routes */}
+        <Route path="/admin" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<AdminDashboard />} />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="activities" element={<AdminActivities />} />
+          <Route path="activities/create" element={<CreateActivity />} />
+          <Route path="activities/edit/:id" element={<EditActivity />} />
+          <Route path="bookings" element={<AdminBookings />} />
+        </Route>
 
-      {/* Hosting Routes */}
-      <Route path="/hosting" element={
-        <ProtectedRoute allowedRoles={['vendor', 'admin']}>
-          <HostingLayout />
-        </ProtectedRoute>
-      }>
-        <Route index element={<HostingDashboard />} />
-        <Route path="listings" element={<HostingActivities />} />
-        <Route path="activities/edit/:id" element={<EditActivity />} />
-        <Route path="create" element={<CreateActivity />} />
-        <Route path="bookings" element={<HostingBookings />} />
-      </Route>
-    </Routes>
+        {/* Hosting Routes */}
+        <Route path="/hosting" element={
+          <ProtectedRoute allowedRoles={['vendor', 'admin']}>
+            <HostingLayout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<HostingDashboard />} />
+          <Route path="listings" element={<HostingActivities />} />
+          <Route path="activities/edit/:id" element={<EditActivity />} />
+          <Route path="create" element={<CreateActivity />} />
+          <Route path="bookings" element={<HostingBookings />} />
+        </Route>
+      </Routes>
+    </Suspense>
   );
 }
 

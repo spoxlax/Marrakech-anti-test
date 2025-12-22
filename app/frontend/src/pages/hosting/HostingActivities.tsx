@@ -1,5 +1,5 @@
 import React from 'react';
-import { useQuery, gql } from '@apollo/client';
+import { useQuery, gql, useMutation } from '@apollo/client';
 import { Link } from 'react-router-dom';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 
@@ -40,32 +40,12 @@ const HostingActivities: React.FC = () => {
 
     const activities: HostingActivityRow[] = data?.myActivities || [];
 
-    const handleDelete = async (id: string, images: string[] | null | undefined) => {
+    const handleDelete = async (id: string) => {
         if (!window.confirm('Are you sure you want to delete this listing? This action cannot be undone.')) return;
 
         try {
-            // 1. Delete Activity from DB
+            // Delete Activity from DB (Backend handles image deletion now)
             await deleteActivity({ variables: { id } });
-
-            // 2. Delete Images from Upload Service
-            if (images && images.length > 0) {
-                images.forEach(async (url) => {
-                    try {
-                        const filename = url.split('/').pop();
-                        if (filename) {
-                            await fetch('http://localhost:5007/file', {
-                                method: 'DELETE',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({ filename })
-                            });
-                        }
-                    } catch (e) {
-                        console.error("Failed to delete image", url, e);
-                    }
-                });
-            }
         } catch (err) {
             console.error("Failed to delete activity", err);
             alert("Failed to delete activity");
@@ -117,7 +97,7 @@ const HostingActivities: React.FC = () => {
                                         <Edit2 size={16} /> Edit
                                     </Link>
                                     <button
-                                        onClick={() => handleDelete(activity.id, activity.images)}
+                                        onClick={() => handleDelete(activity.id)}
                                         className="text-sm font-medium text-red-500 hover:text-red-700 flex items-center gap-1"
                                     >
                                         <Trash2 size={16} /> Delete

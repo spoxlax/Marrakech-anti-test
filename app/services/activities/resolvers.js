@@ -14,12 +14,12 @@ const resolvers = {
     },
     searchActivities: async (_, { query, category, minPrice, maxPrice, city, minRating }) => {
       const filter = {};
-      
+
       // Text Search
       if (query) {
-         filter.$text = { $search: query };
+        filter.$text = { $search: query };
       }
-      
+
       // Category Filter
       if (category && category !== 'All') {
         filter.category = category;
@@ -27,9 +27,9 @@ const resolvers = {
 
       // City Filter
       if (city && city !== 'All') {
-          filter.city = city;
+        filter.city = city;
       }
-      
+
       // Price Filter
       if (minPrice !== undefined || maxPrice !== undefined) {
         filter.priceAdult = {};
@@ -39,20 +39,20 @@ const resolvers = {
 
       // Rating Filter
       if (minRating !== undefined) {
-          filter.averageRating = { $gte: minRating };
+        filter.averageRating = { $gte: minRating };
       }
-      
+
       // If no query but filters exist, text search won't work alone like this easily if mixed with other filters in some mongo versions without specific index setups, 
       // but standard find works. However, $text requires $search. 
       // If query IS provided, use $text. If NOT, use regex or just matches.
-      
+
       if (!query && Object.keys(filter).length > 0) {
-          // If purely filtering without text search
-          return await Activity.find(filter);
+        // If purely filtering without text search
+        return await Activity.find(filter);
       } else if (query) {
-         return await Activity.find(filter);
+        return await Activity.find(filter);
       } else {
-         return await Activity.find().limit(20); // Default recent/all
+        return await Activity.find().limit(20); // Default recent/all
       }
     },
     searchSuggestions: async (_, { query }) => {
@@ -141,7 +141,7 @@ const resolvers = {
     },
     updateActivity: async (_, { id, input }, { user }) => {
       if (!user) throw new Error('Unauthorized');
-      
+
       const activity = await Activity.findById(id);
       if (!activity) throw new Error('Activity not found');
 
@@ -159,7 +159,7 @@ const resolvers = {
       Object.assign(activity, input);
       // If vendor updates, maybe reset to pending? For now keeping same status or forcing pending if critical fields change.
       // activity.status = user.role === 'admin' ? activity.status : 'PENDING'; 
-      
+
       await activity.save();
       return activity;
     },
@@ -168,18 +168,41 @@ const resolvers = {
       return await Activity.findByIdAndUpdate(id, { status: 'APPROVED' }, { new: true });
     },
     deleteActivity: async (_, { id }, { user }) => {
-       if (!user) throw new Error('Unauthorized');
-       
-       const activity = await Activity.findById(id);
-       if (!activity) return false;
+      if (!user) throw new Error('Unauthorized');
 
-       // Admin or Owner check
-       if (user.role !== 'admin' && activity.vendorId.toString() !== user.userId) {
-         throw new Error('Forbidden');
-       }
+      const activity = await Activity.findById(id);
+      if (!activity) return false;
 
-       await Activity.findByIdAndDelete(id);
-       return true;
+      // Admin or Owner check
+      if (user.role !== 'admin' && activity.vendorId.toString() !== user.userId) {
+        throw new Error('Forbidden');
+      }
+
+      // Delete images from Upload Service
+      if (activity.images && activity.images.length > 0) {
+        const uploadServiceUrl = process.env.UPLOADS_SERVICE_URL || 'http://localhost:5007';
+
+        // Use Promise.allSettled to ensure all deletion attempts run even if one fails
+        await Promise.allSettled(activity.images.map(async (imageUrl) => {
+          try {
+            // Extract filename from URL (assuming format http://.../uploads/filename.ext)
+            const filename = imageUrl.split('/').pop();
+            if (!filename) return;
+
+            // Global fetch is available in Node 18+
+            await fetch(`${uploadServiceUrl}/file`, {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ filename })
+            });
+          } catch (err) {
+            console.error(`Failed to delete image ${imageUrl}:`, err);
+          }
+        }));
+      }
+
+      await Activity.findByIdAndDelete(id);
+      return true;
     },
   },
   Activity: {

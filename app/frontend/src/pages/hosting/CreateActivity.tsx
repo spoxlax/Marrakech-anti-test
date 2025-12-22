@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, gql } from '@apollo/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ImagePlus, Loader } from 'lucide-react';
 
 const GET_CATEGORIES = gql`
@@ -32,7 +32,10 @@ const CREATE_ACTIVITY = gql`
 
 const CreateActivity: React.FC = () => {
     const navigate = useNavigate();
-    const [createActivity, { loading, error }] = useMutation(CREATE_ACTIVITY);
+    const location = useLocation();
+    const [createActivity, { loading, error }] = useMutation(CREATE_ACTIVITY, {
+        refetchQueries: ['GetActivities', 'MyActivities']
+    });
     const [createCategory, { loading: creatingCategory }] = useMutation(CREATE_CATEGORY, {
         refetchQueries: [{ query: GET_CATEGORIES }],
     });
@@ -154,7 +157,12 @@ const CreateActivity: React.FC = () => {
                     }
                 }
             });
-            navigate('/hosting/listings');
+
+            if (location.pathname.includes('/admin')) {
+                navigate('/admin/activities');
+            } else {
+                navigate('/hosting/listings');
+            }
         } catch (err) {
             console.error("Failed to create activity", err);
         }
