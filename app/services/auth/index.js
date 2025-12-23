@@ -40,7 +40,7 @@ async function startServer() {
       if (authHeader.startsWith('Bearer ')) {
         const token = authHeader.replace('Bearer ', '');
         try {
-          user = jwt.verify(token, process.env.JWT_SECRET || 'secret_key');
+          user = jwt.verify(token, process.env.JWT_SECRET);
         } catch (e) {
           user = null;
         }

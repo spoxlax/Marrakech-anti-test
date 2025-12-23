@@ -192,7 +192,10 @@ const resolvers = {
             // Global fetch is available in Node 18+
             await fetch(`${uploadServiceUrl}/file`, {
               method: 'DELETE',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 
+                'Content-Type': 'application/json',
+                'x-api-key': process.env.UPLOADS_API_KEY
+              },
               body: JSON.stringify({ filename })
             });
           } catch (err) {

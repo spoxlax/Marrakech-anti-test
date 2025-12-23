@@ -19,8 +19,22 @@ const resolvers = {
   Query: {
     booking: async (_, { id }, { user }) => {
       const booking = await Booking.findById(id);
-      // Add authorization check here (user owns booking or is vendor/admin)
-      return booking;
+      if (!booking) return null;
+
+      // Allow if user is admin
+      if (user && user.role === 'admin') return booking;
+
+      // Allow if user is owner (Customer or Vendor)
+      if (user) {
+        if (booking.customerId && booking.customerId.toString() === user.userId) return booking;
+        if (booking.vendorId && booking.vendorId.toString() === user.userId) return booking;
+      }
+
+      // Allow if it's a guest booking (no customerId associated)
+      // Note: In production, we should require confirmationCode for guest access
+      if (!booking.customerId) return booking;
+
+      throw new Error('Forbidden');
     },
     myBookings: async (_, __, { user }) => {
       if (!user) throw new Error('Unauthorized');
@@ -72,7 +86,14 @@ const resolvers = {
       if (!user || (user.role !== 'vendor' && user.role !== 'admin')) {
         throw new Error('Unauthorized');
       }
-      // Add check to ensure vendor owns the booking
+
+      const booking = await Booking.findById(id);
+      if (!booking) throw new Error('Booking not found');
+
+      if (user.role !== 'admin' && booking.vendorId.toString() !== user.userId) {
+        throw new Error('Forbidden');
+      }
+
       return await Booking.findByIdAndUpdate(id, { status }, { new: true });
     },
   },

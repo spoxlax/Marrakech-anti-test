@@ -191,10 +191,14 @@ const EditActivity = () => {
         const uploadPromises = Array.from(files).map(async (file) => {
             const formData = new FormData();
             formData.append('file', file);
+            const token = localStorage.getItem('token');
 
             try {
                 const response = await fetch('http://localhost:5007/upload', {
                     method: 'POST',
+                    headers: {
+                        'Authorization': token ? `Bearer ${token}` : ''
+                    },
                     body: formData,
                 });
                 const data = await response.json();

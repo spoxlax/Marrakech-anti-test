@@ -7,19 +7,7 @@ const path = require('path');
 const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
-
-// Manual dotenv loading
-const dotenvPath = path.resolve(__dirname, '.env');
-if (fs.existsSync(dotenvPath)) {
-  try {
-    const envConfig = require('dotenv').parse(fs.readFileSync(dotenvPath));
-    for (const k in envConfig) {
-      process.env[k] = envConfig[k];
-    }
-  } catch (e) {
-    console.error('Failed to parse .env:', e);
-  }
-}
+require('dotenv').config();
 
 // Critical Security Check
 if (!process.env.JWT_SECRET) {
@@ -61,7 +49,7 @@ async function startServer() {
     contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false, // Allow GraphQL Playground in dev
     crossOriginEmbedderPolicy: false,
   }));
-  
+
   app.use(cors()); // Configure strict CORS in production
 
   // Rate Limiting

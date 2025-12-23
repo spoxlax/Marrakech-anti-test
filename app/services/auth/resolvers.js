@@ -7,20 +7,24 @@ const resolvers = {
     me: async (_, __, { token }) => {
       if (!token) return null;
       try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         return await User.findById(decoded.userId);
       } catch (err) {
         return null;
       }
     },
     users: async (_, __, { user }) => {
-      // Basic admin check - optional: if (user?.role !== 'admin') throw new Error('Forbidden');
+      if (!user || user.role !== 'admin') {
+        throw new Error('Forbidden: Admins only');
+      }
       return await User.find();
     },
   },
   Mutation: {
     deleteUser: async (_, { id }, { user }) => {
-      // if (user?.role !== 'admin') throw new Error('Forbidden');
+      if (!user || user.role !== 'admin') {
+        throw new Error('Forbidden: Admins only');
+      }
       await User.findByIdAndDelete(id);
       return true;
     },
@@ -45,7 +49,7 @@ const resolvers = {
 
       const token = jwt.sign(
         { userId: user.id, role: user.role },
-        process.env.JWT_SECRET || 'secret_key',
+        process.env.JWT_SECRET,
         { expiresIn: '7d' }
       );
 
@@ -65,7 +69,7 @@ const resolvers = {
 
       const token = jwt.sign(
         { userId: user.id, role: user.role },
-        process.env.JWT_SECRET || 'secret_key',
+        process.env.JWT_SECRET,
         { expiresIn: '7d' }
       );
 

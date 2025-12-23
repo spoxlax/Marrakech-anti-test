@@ -417,10 +417,14 @@ const CreateActivity: React.FC = () => {
                                     const uploadPromises = Array.from(files).map(async (file) => {
                                         const uploadData = new FormData();
                                         uploadData.append('file', file);
+                                        const token = localStorage.getItem('token');
 
                                         try {
                                             const response = await fetch('http://localhost:5007/upload', {
                                                 method: 'POST',
+                                                headers: {
+                                                    'Authorization': token ? `Bearer ${token}` : ''
+                                                },
                                                 body: uploadData,
                                             });
                                             if (!response.ok) throw new Error('Upload failed');
