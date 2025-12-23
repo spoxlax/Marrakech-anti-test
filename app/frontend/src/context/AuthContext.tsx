@@ -13,7 +13,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return null;
         }
         try {
-            return jwtDecode<User>(storedToken);
+            const decoded = jwtDecode<User & { exp: number }>(storedToken);
+            const currentTime = Date.now() / 1000;
+
+            if (decoded.exp < currentTime) {
+                console.warn("Token expired");
+                localStorage.removeItem('token');
+                return null;
+            }
+
+            return decoded;
         } catch (e) {
             console.error("Invalid token", e);
             localStorage.removeItem('token');

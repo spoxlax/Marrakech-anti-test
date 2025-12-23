@@ -28,6 +28,47 @@ const resolvers = {
       await User.findByIdAndDelete(id);
       return true;
     },
+    createUser: async (_, { input }, { user }) => {
+      if (!user || user.role !== 'admin') {
+        throw new Error('Forbidden: Admins only');
+      }
+      const { firstName, lastName, email, password, role } = input;
+      
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        throw new Error('User already exists');
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      const newUser = new User({
+        firstName,
+        lastName,
+        email,
+        password: hashedPassword,
+        role,
+      });
+
+      return await newUser.save();
+    },
+    updateUser: async (_, { id, input }, { user }) => {
+      if (!user || user.role !== 'admin') {
+        throw new Error('Forbidden: Admins only');
+      }
+      
+      const updateData = { ...input };
+      
+      if (updateData.password) {
+        updateData.password = await bcrypt.hash(updateData.password, 10);
+      } else {
+        delete updateData.password;
+      }
+
+      const updatedUser = await User.findByIdAndUpdate(id, updateData, { new: true });
+      if (!updatedUser) {
+        throw new Error('User not found');
+      }
+      return updatedUser;
+    },
     signup: async (_, { input }) => {
       const { firstName, lastName, email, password, role } = input;
       

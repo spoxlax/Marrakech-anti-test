@@ -10,6 +10,24 @@ const typeDefs = gql`
     signup(input: SignupInput!): AuthPayload
     login(input: LoginInput!): AuthPayload
     deleteUser(id: ID!): Boolean
+    createUser(input: CreateUserInput!): User
+    updateUser(id: ID!, input: UpdateUserInput!): User
+  }
+
+  input CreateUserInput {
+    firstName: String!
+    lastName: String!
+    email: String!
+    password: String!
+    role: String!
+  }
+
+  input UpdateUserInput {
+    firstName: String
+    lastName: String
+    email: String
+    password: String
+    role: String
   }
 
   type User @key(fields: "id") {

@@ -12,6 +12,8 @@ const Contact = lazy(() => import('./pages/Contact'));
 const Booking = lazy(() => import('./pages/Booking'));
 const Checkout = lazy(() => import('./pages/Checkout'));
 const BookingConfirmation = lazy(() => import('./pages/BookingConfirmation'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+const Unauthorized = lazy(() => import('./pages/Unauthorized'));
 
 // Admin Pages
 const AdminLayout = lazy(() => import('./layouts/AdminLayout'));
@@ -60,7 +62,7 @@ function App() {
 
         {/* Hosting Routes */}
         <Route path="/hosting" element={
-          <ProtectedRoute allowedRoles={['vendor', 'admin']}>
+          <ProtectedRoute allowedRoles={['vendor']}>
             <HostingLayout />
           </ProtectedRoute>
         }>
@@ -70,6 +72,8 @@ function App() {
           <Route path="create" element={<CreateActivity />} />
           <Route path="bookings" element={<HostingBookings />} />
         </Route>
+        <Route path="/unauthorized" element={<Unauthorized />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
   );
