@@ -53,6 +53,10 @@ type AdminBookingRow = {
         email?: string | null;
         phone?: string | null;
     } | null;
+    persons?: {
+        adults?: number | null;
+        children?: number | null;
+    } | null;
     activity?: {
         title?: string | null;
     } | null;
@@ -82,7 +86,6 @@ const AdminBookings: React.FC = () => {
             alert("Failed to update status");
         }
     };
-
     let bookings: AdminBookingRow[] = data?.allBookings || [];
 
     // Client-side filtering for vendor role since it's a resolved field
@@ -120,7 +123,7 @@ const AdminBookings: React.FC = () => {
                         <select
                             className="pl-10 pr-8 py-2 border border-gray-300 rounded-lg text-sm appearance-none bg-white focus:ring-2 focus:ring-black focus:outline-none cursor-pointer"
                             value={filterRole}
-                            onChange={(e) => setFilterRole(e.target.value as any)}
+                            onChange={(e) => setFilterRole(e.target.value as 'ALL' | 'ADMIN' | 'VENDOR')}
                         >
                             <option value="ALL">All Listings</option>
                             <option value="ADMIN">Admin Listings</option>
@@ -143,6 +146,7 @@ const AdminBookings: React.FC = () => {
                                     <th className="px-6 py-4">Code</th>
                                     <th className="px-6 py-4">Activity</th>
                                     <th className="px-6 py-4">Guest</th>
+                                    <th className="px-6 py-4">Participants</th>
                                     <th className="px-6 py-4">Date</th>
                                     <th className="px-6 py-4">Status</th>
                                     <th className="px-6 py-4">Total</th>
@@ -166,6 +170,13 @@ const AdminBookings: React.FC = () => {
                                             </div>
                                             <div className="text-xs text-gray-500">{booking.customerInfo?.email}</div>
                                             <div className="text-xs text-gray-500">{booking.customerInfo?.phone}</div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="font-medium text-gray-900">
+                                                {(booking.persons?.adults || 0) + (booking.persons?.children || 0)} Guests
+                                            </div>
+                                            <div className="text-xs text-gray-500">{booking.persons?.adults || 0} adults,</div>
+                                            <div className="text-xs text-gray-500">{booking.persons?.children || 0} children</div>
                                         </td>
                                         <td className="px-6 py-4 text-gray-600">{booking.date}</td>
                                         <td className="px-6 py-4">
