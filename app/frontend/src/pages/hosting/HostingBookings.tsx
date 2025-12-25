@@ -1,76 +1,18 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, gql } from '@apollo/client';
-import { CalendarCheck, Search, Filter, Camera, Trash2, Edit } from 'lucide-react';
+import { useQuery, useMutation } from '@apollo/client';
+import { CalendarCheck, Camera, Trash2, Edit } from 'lucide-react';
 import PhotoUploadModal from '../../components/PhotoUploadModal';
 import EditBookingModal from '../../components/EditBookingModal';
+import ConfirmModal from '../../components/ConfirmModal';
 import Toast from '../../components/Toast';
 import type { ToastType } from '../../components/Toast';
-
-const VENDOR_BOOKINGS = gql`
-  query VendorBookings {
-    vendorBookings {
-        id
-        activityId
-        date
-        confirmationCode
-      persons {
-            adults
-            children
-        }
-        totalPrice
-        status
-      customerInfo {
-            firstName
-            lastName
-            email
-            phone
-        }
-      activity {
-            title
-        }
-        professionalPhotos
-    }
-}
-`;
-
-const UPDATE_BOOKING_STATUS = gql`
-  mutation UpdateBookingStatus($id: ID!, $status: String!) {
-    updateBookingStatus(id: $id, status: $status) {
-        id
-        status
-    }
-}
-`;
-
-const ADD_BOOKING_PHOTOS = gql`
-  mutation AddBookingPhotos($bookingId: ID!, $photoUrls: [String!]!) {
-    addBookingPhotos(bookingId: $bookingId, photoUrls: $photoUrls) {
-        id
-        professionalPhotos
-    }
-}
-`;
-
-const DELETE_BOOKING = gql`
-  mutation DeleteBooking($id: ID!) {
-    deleteBooking(id: $id)
-}
-`;
-
-const UPDATE_BOOKING_DETAILS = gql`
-  mutation UpdateBookingDetails($id: ID!, $input: UpdateBookingInput!) {
-    updateBookingDetails(id: $id, input: $input) {
-        id
-        date
-      persons {
-            adults
-            children
-        }
-        totalPrice
-        status
-    }
-}
-`;
+import {
+    VENDOR_BOOKINGS,
+    UPDATE_BOOKING_STATUS,
+    ADD_BOOKING_PHOTOS,
+    DELETE_BOOKING,
+    UPDATE_BOOKING_DETAILS
+} from '../../graphql/bookings';
 
 type VendorBookingRow = {
     id: string;
@@ -109,6 +51,7 @@ const HostingBookings: React.FC = () => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
     const [selectedBookingForEdit, setSelectedBookingForEdit] = useState<any>(null);
+    const [deleteId, setDeleteId] = useState<string | null>(null);
 
     // Toast State
     const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
@@ -143,15 +86,17 @@ const HostingBookings: React.FC = () => {
     };
 
     // --- Delete Handler ---
-    const handleDelete = async (id: string) => {
-        if (window.confirm("Are you sure you want to delete this booking? This action cannot be undone.")) {
-            try {
-                await deleteBooking({ variables: { id } });
-                refetch();
-            } catch (err) {
-                console.error(err);
-                alert("Failed to delete booking");
-            }
+    const handleDelete = async () => {
+        if (!deleteId) return;
+
+        try {
+            await deleteBooking({ variables: { id: deleteId } });
+            refetch();
+        } catch (err) {
+            console.error(err);
+            setToast({ message: 'Failed to delete booking', type: 'error' });
+        } finally {
+            setDeleteId(null);
         }
     };
 
@@ -270,7 +215,7 @@ const HostingBookings: React.FC = () => {
                                                     <Edit size={18} />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDelete(booking.id)}
+                                                    onClick={() => setDeleteId(booking.id)}
                                                     className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                                                     title="Delete Booking"
                                                 >
@@ -304,6 +249,16 @@ const HostingBookings: React.FC = () => {
                 onClose={() => setIsEditModalOpen(false)}
                 onSave={handleEditSave}
                 booking={selectedBookingForEdit}
+            />
+
+            <ConfirmModal
+                isOpen={!!deleteId}
+                onClose={() => setDeleteId(null)}
+                onConfirm={handleDelete}
+                title="Delete Booking"
+                message="Are you sure you want to delete this booking? This action cannot be undone."
+                confirmText="Delete"
+                isDangerous={true}
             />
         </div>
     );

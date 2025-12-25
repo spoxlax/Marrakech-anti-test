@@ -1,37 +1,12 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, gql } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import { Star, MapPin, User, Share, Heart, Award } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ImageGallery from '../components/ImageGallery';
 import DateCalendar from '../components/DateCalendar';
-
-const GET_ACTIVITY_AND_REVIEWS = gql`
-  query GetActivityAndReviews($id: ID!) {
-    activity(id: $id) {
-      id
-      title
-      description
-      priceAdult
-      priceChild
-      duration
-      maxParticipants
-      category
-      images
-    }
-    reviews(activityId: $id) {
-      id
-      rating
-      comment
-      createdAt
-      user {
-        firstName
-        lastName
-      }
-    }
-  }
-`;
+import { GET_ACTIVITY_AND_REVIEWS } from '../graphql/activities';
 
 type Review = {
   id: string;

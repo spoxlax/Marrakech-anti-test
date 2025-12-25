@@ -1,26 +1,8 @@
 import React from 'react';
-import { useQuery, gql } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, ChevronRight, Camera } from 'lucide-react';
-
-const GET_MY_BOOKINGS = gql`
-  query MyBookings {
-    myBookings {
-      id
-      date
-      status
-      totalPrice
-      paymentMethod
-      confirmationCode
-      activity {
-        id
-        title
-        images
-        city
-      }
-    }
-  }
-`;
+import { Calendar, Camera, ChevronRight } from 'lucide-react';
+import { GET_MY_BOOKINGS } from '../../graphql/bookings';
 
 type MyBooking = {
     id: string;

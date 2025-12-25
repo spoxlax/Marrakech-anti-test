@@ -28,7 +28,7 @@ const gateway = new ApolloGateway({
       { name: 'reviews', url: 'http://localhost:5004/graphql' },
       { name: 'payments', url: 'http://localhost:5006/graphql' },
     ],
-    pollIntervalInMs: 3000,
+    pollIntervalInMs: 10000,
   }),
   buildService: ({ url }) =>
     new RemoteGraphQLDataSource({
@@ -60,7 +60,7 @@ async function startServer() {
   // Rate Limiting
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    max: 1000, // limit each IP to 1000 requests per windowMs
     message: 'Too many requests from this IP, please try again later.'
   });
   app.use(limiter);

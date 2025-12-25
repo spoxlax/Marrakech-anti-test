@@ -4,14 +4,17 @@ const bookingSchema = new mongoose.Schema({
   activityId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
+    index: true,
   },
   vendorId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
+    index: true,
   },
   customerId: {
     type: mongoose.Schema.Types.ObjectId,
     required: false, // Optional if guest checkout
+    index: true,
   },
   customerInfo: {
     firstName: String,
@@ -35,6 +38,7 @@ const bookingSchema = new mongoose.Schema({
     type: String,
     enum: ['pending', 'confirmed', 'cancelled', 'completed'],
     default: 'pending',
+    index: true,
   },
   paymentMethod: {
     type: String,

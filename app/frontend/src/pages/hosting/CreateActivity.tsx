@@ -1,34 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useMutation, useQuery, gql } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ImagePlus, Loader } from 'lucide-react';
-
-const GET_CATEGORIES = gql`
-  query GetCategories {
-    categories {
-      id
-      name
-    }
-  }
-`;
-
-const CREATE_CATEGORY = gql`
-  mutation CreateCategory($input: CategoryInput!) {
-    createCategory(input: $input) {
-      id
-      name
-    }
-  }
-`;
-
-const CREATE_ACTIVITY = gql`
-  mutation CreateActivity($input: CreateActivityInput!) {
-    createActivity(input: $input) {
-      id
-      title
-    }
-  }
-`;
+import { GET_CATEGORIES, CREATE_CATEGORY, CREATE_ACTIVITY } from '../../graphql/activities';
 
 const CreateActivity: React.FC = () => {
     const navigate = useNavigate();

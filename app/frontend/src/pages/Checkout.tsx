@@ -1,37 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useMutation, gql, useQuery } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { ChevronLeft, CreditCard, Star } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-
-const GET_ACTIVITY_AND_USER = gql`
-  query GetActivityAndUser($id: ID!) {
-    activity(id: $id) {
-      id
-      title
-      priceAdult
-      priceChild
-      images
-    }
-    me {
-      id
-      email
-      firstName
-      lastName
-    }
-  }
-`;
-
-const CREATE_BOOKING = gql`
-  mutation CreateBooking($input: CreateBookingInput!) {
-    createBooking(input: $input) {
-      id
-      status
-      paymentMethod
-    }
-  }
-`;
+import { GET_ACTIVITY_AND_USER, CREATE_BOOKING } from '../graphql/bookings';
 
 const Checkout: React.FC = () => {
     const location = useLocation();
@@ -95,7 +68,7 @@ const Checkout: React.FC = () => {
                 variables: {
                     input: {
                         activityId: activity.id,
-                        vendorId: activity.id,
+                        vendorId: activity.vendorId,
                         date: date,
                         persons: {
                             adults: Number(adults),

@@ -1,38 +1,8 @@
 import React from 'react';
-import { useQuery, gql } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Calendar, MapPin, Download, CheckCircle, Clock, XCircle, ArrowLeft, Camera, Users } from 'lucide-react';
-
-const GET_BOOKING_DETAILS = gql`
-  query GetBookingDetails($id: ID!) {
-    booking(id: $id) {
-      id
-      date
-      status
-      totalPrice
-      paymentMethod
-      confirmationCode
-      persons {
-          adults
-          children
-      }
-      customerInfo {
-          firstName
-          lastName
-          email
-          phone
-      }
-      activity {
-        id
-        title
-        images
-        city
-        description
-      }
-      professionalPhotos
-    }
-  }
-`;
+import { Calendar, MapPin, Download, ArrowLeft, Camera, Users } from 'lucide-react';
+import { GET_BOOKING_DETAILS } from '../../graphql/bookings';
 
 const BookingDetails: React.FC = () => {
     const { id } = useParams<{ id: string }>();

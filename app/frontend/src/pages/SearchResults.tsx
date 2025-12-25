@@ -1,31 +1,11 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useQuery, gql } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ActivityCard, { type Activity } from '../components/ActivityCard';
 import { SlidersHorizontal, Loader } from 'lucide-react';
-
-const GET_CATEGORIES = gql`
-  query GetCategories {
-    categories {
-      id
-      name
-    }
-  }
-`;
-
-const SEARCH_ACTIVITIES = gql`
-  query SearchActivities($query: String, $category: String, $minPrice: Float, $maxPrice: Float, $city: String, $minRating: Float) {
-    searchActivities(query: $query, category: $category, minPrice: $minPrice, maxPrice: $maxPrice, city: $city, minRating: $minRating) {
-      id
-      title
-      priceAdult
-      duration
-      images
-    }
-  }
-`;
+import { GET_CATEGORIES, SEARCH_ACTIVITIES } from '../graphql/activities';
 
 const SearchResults: React.FC = () => {
     const location = useLocation();

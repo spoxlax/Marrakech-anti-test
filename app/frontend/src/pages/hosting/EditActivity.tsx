@@ -1,50 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useMutation, useQuery, gql } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { Upload, X, Loader } from 'lucide-react';
-
-const GET_CATEGORIES = gql`
-  query GetCategories {
-    categories {
-      id
-      name
-    }
-  }
-`;
-
-const CREATE_CATEGORY = gql`
-  mutation CreateCategory($input: CategoryInput!) {
-    createCategory(input: $input) {
-      id
-      name
-    }
-  }
-`;
-
-const GET_ACTIVITY = gql`
-  query GetActivity($id: ID!) {
-    activity(id: $id) {
-      id
-      title
-      description
-      priceAdult
-      priceChild
-      duration
-      maxParticipants
-      category
-      images
-    }
-  }
-`;
-
-const UPDATE_ACTIVITY = gql`
-  mutation UpdateActivity($id: ID!, $input: CreateActivityInput!) {
-    updateActivity(id: $id, input: $input) {
-      id
-      title
-    }
-  }
-`;
+import { GET_CATEGORIES, CREATE_CATEGORY, GET_ACTIVITY, UPDATE_ACTIVITY } from '../../graphql/activities';
 
 type EditActivityQueryData = {
     activity: {

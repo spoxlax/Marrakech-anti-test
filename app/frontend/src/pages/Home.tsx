@@ -2,44 +2,13 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ActivityCard, { type Activity } from '../components/ActivityCard';
-import { useQuery, gql } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import { Palmtree, Tent, Mountain, Camera, Grid, Car, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DayPicker } from 'react-day-picker';
 import { format } from 'date-fns';
 import 'react-day-picker/style.css';
-
-const GET_ACTIVITIES = gql`
-  query GetActivities {
-    activities {
-      id
-      title
-      description
-      priceAdult
-      priceChild
-      vendorId
-      duration
-      images
-      category
-    }
-  }
-`;
-
-const GET_CATEGORIES = gql`
-  query GetCategories {
-    categories {
-      id
-      name
-      icon
-    }
-  }
-`;
-
-const SEARCH_SUGGESTIONS = gql`
-  query SearchSuggestions($query: String!) {
-    searchSuggestions(query: $query)
-  }
-`;
+import { GET_ALL_ACTIVITIES, GET_CATEGORIES, SEARCH_SUGGESTIONS } from '../graphql/activities';
 
 const categoryIconMap: Record<string, React.ComponentType<{ size?: string | number }>> = {
     Camping: Tent,
@@ -84,7 +53,7 @@ const Home: React.FC = () => {
     const [openPanel, setOpenPanel] = useState<'where' | 'when' | 'who' | null>(null);
     const searchBarRef = useRef<HTMLDivElement>(null);
 
-    const { loading, error, data } = useQuery(GET_ACTIVITIES);
+    const { loading, error, data } = useQuery(GET_ALL_ACTIVITIES);
     const { data: categoriesData } = useQuery(GET_CATEGORIES);
     const { data: suggestionsData } = useQuery(SEARCH_SUGGESTIONS, {
         variables: { query: whereQuery },

@@ -7,5 +7,15 @@ export default defineConfig({
   server: {
     host: '127.0.0.1',
     port: 3000
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom', '@apollo/client', 'graphql'],
+          ui: ['lucide-react', 'recharts', 'react-day-picker'],
+        }
+      }
+    }
   }
 })

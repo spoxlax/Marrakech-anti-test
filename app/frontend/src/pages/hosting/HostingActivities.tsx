@@ -1,25 +1,9 @@
-import React from 'react';
-import { useQuery, gql, useMutation } from '@apollo/client';
+import React, { useState } from 'react';
+import { useQuery, useMutation } from '@apollo/client';
 import { Link } from 'react-router-dom';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
-
-const MY_ACTIVITIES = gql`
-  query MyActivities {
-    myActivities {
-      id
-      title
-      priceAdult
-      status
-      images
-    }
-  }
-`;
-
-const DELETE_ACTIVITY = gql`
-  mutation DeleteActivity($id: ID!) {
-    deleteActivity(id: $id)
-  }
-`;
+import ConfirmModal from '../../components/ConfirmModal';
+import { MY_ACTIVITIES, DELETE_ACTIVITY } from '../../graphql/activities';
 
 type HostingActivityRow = {
     id: string;
@@ -34,21 +18,24 @@ const HostingActivities: React.FC = () => {
     const [deleteActivity] = useMutation(DELETE_ACTIVITY, {
         refetchQueries: [{ query: MY_ACTIVITIES }]
     });
+    const [deleteId, setDeleteId] = useState<string | null>(null);
 
     if (loading) return <div className="p-8">Loading your listings...</div>;
     if (error) return <div className="p-8 text-red-500">Error: {error.message} (Are you logged in as an Admin/Vendor?)</div>;
 
     const activities: HostingActivityRow[] = data?.myActivities || [];
 
-    const handleDelete = async (id: string) => {
-        if (!window.confirm('Are you sure you want to delete this listing? This action cannot be undone.')) return;
+    const handleDelete = async () => {
+        if (!deleteId) return;
 
         try {
             // Delete Activity from DB (Backend handles image deletion now)
-            await deleteActivity({ variables: { id } });
+            await deleteActivity({ variables: { id: deleteId } });
         } catch (err) {
             console.error("Failed to delete activity", err);
             alert("Failed to delete activity");
+        } finally {
+            setDeleteId(null);
         }
     };
 
@@ -97,7 +84,7 @@ const HostingActivities: React.FC = () => {
                                         <Edit2 size={16} /> Edit
                                     </Link>
                                     <button
-                                        onClick={() => handleDelete(activity.id)}
+                                        onClick={() => setDeleteId(activity.id)}
                                         className="text-sm font-medium text-red-500 hover:text-red-700 flex items-center gap-1"
                                     >
                                         <Trash2 size={16} /> Delete
@@ -108,6 +95,16 @@ const HostingActivities: React.FC = () => {
                     ))}
                 </div>
             )}
+
+            <ConfirmModal
+                isOpen={!!deleteId}
+                onClose={() => setDeleteId(null)}
+                onConfirm={handleDelete}
+                title="Delete Activity"
+                message="Are you sure you want to delete this activity? This action cannot be undone."
+                confirmText="Delete"
+                isDangerous={true}
+            />
         </div>
     );
 };

@@ -9,7 +9,7 @@ interface PhotoUploadModalProps {
     bookingId: string;
 }
 
-const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({ isOpen, onClose, onUpload, bookingId }) => {
+const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({ isOpen, onClose, onUpload }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [isUploading, setIsUploading] = useState(false);

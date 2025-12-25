@@ -4,10 +4,12 @@ const activitySchema = new mongoose.Schema({
   vendorId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
+    index: true,
   },
   title: {
     type: String,
     required: true,
+    index: 'text', // Enable text search
   },
   description: {
     type: String,
@@ -16,6 +18,7 @@ const activitySchema = new mongoose.Schema({
   priceAdult: {
     type: Number,
     required: true,
+    index: true,
   },
   priceChild: {
     type: Number,
@@ -32,10 +35,12 @@ const activitySchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
+    index: true,
   },
   city: {
     type: String,
-    default: 'Marrakech'
+    default: 'Marrakech',
+    index: true,
   },
   averageRating: {
     type: Number,

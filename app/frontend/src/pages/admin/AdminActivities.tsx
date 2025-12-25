@@ -1,36 +1,9 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, gql } from '@apollo/client';
+import { useQuery, useMutation } from '@apollo/client';
 import { Link } from 'react-router-dom';
 import { Check, Edit2, Trash2, Clock, Plus } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
-
-const GET_ALL_ACTIVITIES = gql`
-  query GetActivities {
-    activities {
-      id
-      title
-      priceAdult
-      status
-      vendorId
-      images
-    }
-  }
-`;
-
-const APPROVE_ACTIVITY = gql`
-  mutation ApproveActivity($id: ID!) {
-    approveActivity(id: $id) {
-      id
-      status
-    }
-  }
-`;
-
-const DELETE_ACTIVITY = gql`
-  mutation DeleteActivity($id: ID!) {
-    deleteActivity(id: $id)
-  }
-`;
+import { GET_ALL_ACTIVITIES, APPROVE_ACTIVITY, DELETE_ACTIVITY } from '../../graphql/activities';
 
 type AdminActivityRow = {
     id: string;
