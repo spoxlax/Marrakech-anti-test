@@ -69,9 +69,27 @@ const PhotoUploadModal: React.FC<PhotoUploadModalProps> = ({ isOpen, onClose, on
             setSelectedFiles([]);
         } catch (err: any) {
             console.error("Upload error", err);
-            const errorMessage = err.response?.data || err.message || "Failed to upload photos. Please try again.";
+            // Extract error message from JSON response if available
+            let errorMessage = "Failed to upload photos. Please try again.";
+
+            if (err.response?.data) {
+                if (typeof err.response.data === 'string') {
+                    errorMessage = err.response.data;
+                } else if (err.response.data.error) {
+                    errorMessage = err.response.data.error;
+                }
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+
+            // Fallback for HTML error responses (e.g., from unhandled server crashes)
+            if (errorMessage.trim().startsWith('<') || errorMessage.includes('<!DOCTYPE html>')) {
+                console.error("Server returned HTML error:", errorMessage);
+                errorMessage = "Server Error: The upload service encountered an unexpected problem. Please try again later.";
+            }
+
             setUploadError(errorMessage);
-            alert(`Upload Error: ${errorMessage}`);
+            // alert(`Upload Error: ${errorMessage}`);
         } finally {
             setIsUploading(false);
         }

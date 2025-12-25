@@ -69,17 +69,73 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ storage: storage });
-
-app.post('/upload', upload.single('file'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).send('No file uploaded.');
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only JPEG, PNG, and WebP are allowed.'));
+    }
   }
-  const fileUrl = `http://localhost:${PORT}/uploads/${req.file.filename}`;
-  res.json({ url: fileUrl });
 });
 
-app.delete('/file', express.json(), (req, res) => {
+app.post('/upload', authenticateToken, uploadLimiter, (req, res) => {
+  // Define base limit (5MB)
+  let fileSizeLimit = 5 * 1024 * 1024;
+
+  // Increase limit for Admins and Vendors (Unlimited / 10GB)
+  if (req.user && (req.user.role === 'admin' || req.user.role === 'vendor')) {
+    fileSizeLimit = 10 * 1024 * 1024 * 1024; // 10GB
+  }
+
+  // Create a dynamic multer instance for this request
+  const dynamicUpload = multer({
+    storage: storage,
+    limits: {
+      fileSize: fileSizeLimit,
+    },
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+      if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Invalid file type. Only JPEG, PNG, and WebP are allowed.'));
+      }
+    }
+  }).single('file');
+
+  dynamicUpload(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      // A Multer error occurred when uploading.
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        const limitMB = Math.floor(fileSizeLimit / (1024 * 1024));
+        return res.status(400).json({ error: `File too large. Maximum size is ${limitMB}MB.` });
+      }
+      return res.status(400).json({ error: `Upload error: ${err.message}` });
+    } else if (err) {
+      // An unknown error occurred when uploading.
+      return res.status(400).json({ error: `Error: ${err.message}` });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded.' });
+    }
+    const fileUrl = `http://localhost:${PORT}/uploads/${req.file.filename}`;
+    res.json({ url: fileUrl });
+  });
+});
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Internal Server Error', details: process.env.NODE_ENV === 'development' ? err.message : undefined });
+});
+
+app.delete('/file', authenticateToken, express.json(), (req, res) => {
   const { filename } = req.body;
   if (!filename) {
     return res.status(400).send('Filename is required.');

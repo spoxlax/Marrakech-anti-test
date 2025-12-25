@@ -50,7 +50,12 @@ async function startServer() {
     crossOriginEmbedderPolicy: false,
   }));
 
-  app.use(cors()); // Configure strict CORS in production
+  app.use(cors({
+    origin: process.env.NODE_ENV === 'production'
+      ? ['https://your-production-domain.com'] // Update this with actual domain
+      : ['http://localhost:5173', 'http://localhost:4173', 'http://localhost:3000'],
+    credentials: true
+  })); // Configure strict CORS in production
 
   // Rate Limiting
   const limiter = rateLimit({
@@ -80,7 +85,10 @@ async function startServer() {
   });
 
   await server.start();
-  server.applyMiddleware({ app });
+  server.applyMiddleware({
+    app,
+    cors: false // Disable Apollo Server's CORS to let Express CORS middleware handle it
+  });
 
   app.listen(PORT, () => {
     console.log(`🚀 Gateway ready at http://localhost:${PORT}${server.graphqlPath}`);

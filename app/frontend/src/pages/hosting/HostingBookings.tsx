@@ -3,6 +3,8 @@ import { useQuery, useMutation, gql } from '@apollo/client';
 import { CalendarCheck, Search, Filter, Camera, Trash2, Edit } from 'lucide-react';
 import PhotoUploadModal from '../../components/PhotoUploadModal';
 import EditBookingModal from '../../components/EditBookingModal';
+import Toast from '../../components/Toast';
+import type { ToastType } from '../../components/Toast';
 
 const VENDOR_BOOKINGS = gql`
   query VendorBookings {
@@ -108,13 +110,17 @@ const HostingBookings: React.FC = () => {
     const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
     const [selectedBookingForEdit, setSelectedBookingForEdit] = useState<any>(null);
 
+    // Toast State
+    const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+
     const handleStatusChange = async (id: string, newStatus: string) => {
         try {
             await updateStatus({ variables: { id, status: newStatus } });
             refetch();
+            setToast({ message: 'Status updated successfully', type: 'success' });
         } catch (e) {
             console.error("Failed to update status", e);
-            alert("Failed to update status");
+            setToast({ message: 'Failed to update status', type: 'error' });
         }
     };
 
@@ -129,10 +135,10 @@ const HostingBookings: React.FC = () => {
         try {
             await addPhotos({ variables: { bookingId: selectedBookingId, photoUrls } });
             refetch();
-            alert('Photos added successfully!');
+            setToast({ message: 'Photos added successfully!', type: 'success' });
         } catch (err: any) {
             console.error("Mutation Error Full Object:", JSON.stringify(err, null, 2));
-            alert("Failed to link photos to booking");
+            setToast({ message: 'Failed to link photos to booking', type: 'error' });
         }
     };
 
@@ -159,6 +165,7 @@ const HostingBookings: React.FC = () => {
         try {
             await updateDetails({ variables: { id, input: updates } });
             refetch();
+            setToast({ message: 'Booking updated successfully', type: 'success' });
         } catch (err) {
             throw err; // Modal handles alert
         }
@@ -168,6 +175,13 @@ const HostingBookings: React.FC = () => {
 
     return (
         <div className="space-y-6">
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold">Your Bookings</h1>

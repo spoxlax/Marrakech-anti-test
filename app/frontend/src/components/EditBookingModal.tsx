@@ -17,9 +17,11 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({ isOpen, onClose, on
         status: ''
     });
     const [isSaving, setIsSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
 
     useEffect(() => {
         if (booking) {
+            setSaveError(null);
             setFormData({
                 date: booking.date || '',
                 adults: booking.persons?.adults || 0,
@@ -35,6 +37,7 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({ isOpen, onClose, on
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
+        setSaveError(null);
         try {
             await onSave(booking.id, {
                 date: formData.date,
@@ -48,7 +51,7 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({ isOpen, onClose, on
             onClose();
         } catch (error) {
             console.error(error);
-            alert("Failed to save changes");
+            setSaveError("Failed to save changes. Please try again.");
         } finally {
             setIsSaving(false);
         }
@@ -76,6 +79,13 @@ const EditBookingModal: React.FC<EditBookingModalProps> = ({ isOpen, onClose, on
                 </button>
 
                 <h2 className="text-xl font-bold mb-6">Edit Booking</h2>
+
+                {saveError && (
+                    <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2">
+                        <Activity size={16} />
+                        {saveError}
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Status */}

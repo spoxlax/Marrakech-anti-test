@@ -43,7 +43,6 @@ const typeDefs = gql`
     lastName: String!
     email: String!
     password: String!
-    role: String # Optional, defaults to customer
   }
 
   input LoginInput {

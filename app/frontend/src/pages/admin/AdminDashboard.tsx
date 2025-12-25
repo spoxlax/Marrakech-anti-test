@@ -1,4 +1,4 @@
-﻿import React, { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useQuery, gql } from '@apollo/client';
 import {
   Users,
@@ -194,7 +194,7 @@ const AdminDashboard: React.FC = () => {
         {/* Revenue Chart */}
         <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
           <h3 className="font-semibold text-gray-800 mb-6">Revenue Trend</h3>
-          <div className="h-80">
+          <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartsData?.revenueData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
@@ -231,7 +231,7 @@ const AdminDashboard: React.FC = () => {
         {/* Status Distribution */}
         <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
           <h3 className="font-semibold text-gray-800 mb-6">Booking Status</h3>
-          <div className="h-80 flex justify-center items-center">
+          <div className="h-80 w-full flex justify-center items-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie

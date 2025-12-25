@@ -3,6 +3,8 @@ import { useQuery, useMutation, gql } from '@apollo/client';
 import { CalendarCheck, Search, Filter, Camera, Trash2, Edit } from 'lucide-react';
 import PhotoUploadModal from '../../components/PhotoUploadModal';
 import EditBookingModal from '../../components/EditBookingModal';
+import Toast from '../../components/Toast';
+import type { ToastType } from '../../components/Toast';
 
 const ADMIN_BOOKINGS = gql`
   query AdminBookings($search: String) {
@@ -110,6 +112,9 @@ const AdminBookings: React.FC = () => {
     const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
     const [selectedBookingForEdit, setSelectedBookingForEdit] = useState<any>(null);
 
+    // Toast State
+    const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+
     const { loading, error, data, refetch } = useQuery(ADMIN_BOOKINGS, {
         variables: { search: searchTerm },
         fetchPolicy: 'network-only'
@@ -124,9 +129,10 @@ const AdminBookings: React.FC = () => {
         try {
             await updateStatus({ variables: { id, status: newStatus } });
             refetch();
+            setToast({ message: 'Status updated successfully', type: 'success' });
         } catch (e) {
             console.error("Failed to update status", e);
-            alert("Failed to update status");
+            setToast({ message: 'Failed to update status', type: 'error' });
         }
     };
 
@@ -143,7 +149,7 @@ const AdminBookings: React.FC = () => {
         try {
             await addPhotos({ variables: { bookingId: selectedBookingId, photoUrls } });
             refetch();
-            alert('Photos added successfully!');
+            setToast({ message: 'Photos added successfully!', type: 'success' });
         } catch (err: any) {
             console.error("Mutation Error Full Object:", JSON.stringify(err, null, 2));
             if (err.networkError) {
@@ -157,7 +163,7 @@ const AdminBookings: React.FC = () => {
             if (err.graphQLErrors) {
                 console.error("GraphQL Errors:", err.graphQLErrors);
             }
-            alert("Failed to link photos to booking");
+            setToast({ message: 'Failed to link photos to booking', type: 'error' });
         }
     };
 
@@ -167,9 +173,10 @@ const AdminBookings: React.FC = () => {
             try {
                 await deleteBooking({ variables: { id } });
                 refetch();
+                setToast({ message: 'Booking deleted successfully', type: 'success' });
             } catch (err) {
                 console.error(err);
-                alert("Failed to delete booking");
+                setToast({ message: 'Failed to delete booking', type: 'error' });
             }
         }
     };
@@ -184,6 +191,7 @@ const AdminBookings: React.FC = () => {
         try {
             await updateDetails({ variables: { id, input: updates } });
             refetch();
+            setToast({ message: 'Booking updated successfully', type: 'success' });
         } catch (err) {
             throw err; // Modal handles alert
         }
@@ -200,6 +208,13 @@ const AdminBookings: React.FC = () => {
 
     return (
         <div className="space-y-6">
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
+            )}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold">Booking Request Management</h1>

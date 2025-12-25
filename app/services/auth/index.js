@@ -37,15 +37,16 @@ async function startServer() {
     context: ({ req }) => {
       const authHeader = req.headers.authorization || '';
       let user = null;
+      let token = '';
       if (authHeader.startsWith('Bearer ')) {
-        const token = authHeader.replace('Bearer ', '');
+        token = authHeader.replace('Bearer ', '');
         try {
           user = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
         } catch (e) {
           user = null;
         }
       }
-      return { user };
+      return { user, token };
     },
   });
 

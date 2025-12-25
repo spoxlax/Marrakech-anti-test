@@ -33,7 +33,7 @@ const resolvers = {
         throw new Error('Forbidden: Admins only');
       }
       const { firstName, lastName, email, password, role } = input;
-      
+
       const existingUser = await User.findOne({ email });
       if (existingUser) {
         throw new Error('User already exists');
@@ -54,9 +54,9 @@ const resolvers = {
       if (!user || user.role !== 'admin') {
         throw new Error('Forbidden: Admins only');
       }
-      
+
       const updateData = { ...input };
-      
+
       if (updateData.password) {
         updateData.password = await bcrypt.hash(updateData.password, 10);
       } else {
@@ -70,8 +70,18 @@ const resolvers = {
       return updatedUser;
     },
     signup: async (_, { input }) => {
-      const { firstName, lastName, email, password, role } = input;
-      
+      const { firstName, lastName, email, password } = input;
+
+      // Basic Validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        throw new Error('Invalid email format');
+      }
+
+      if (password.length < 8) {
+        throw new Error('Password must be at least 8 characters long');
+      }
+
       const existingUser = await User.findOne({ email });
       if (existingUser) {
         throw new Error('User already exists');
@@ -83,7 +93,7 @@ const resolvers = {
         lastName,
         email,
         password: hashedPassword,
-        role: role || 'customer',
+        role: 'customer', // Force role to customer for public signup
       });
 
       await user.save();
