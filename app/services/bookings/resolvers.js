@@ -97,7 +97,6 @@ const resolvers = {
       return await Booking.findByIdAndUpdate(id, { status }, { new: true });
     },
     addBookingPhotos: async (_, { bookingId, photoUrls }, { user }) => {
-      console.log('addBookingPhotos resolver called with:', { bookingId, photoUrls, user: user ? user.userId : 'none' });
       if (!user) throw new Error('Unauthorized');
       
       const booking = await Booking.findById(bookingId);
