@@ -30,7 +30,6 @@ const typeDefs = gql`
   extend type Mutation {
     createBooking(input: CreateBookingInput!): Booking
     updateBookingStatus(id: ID!, status: String!): Booking
-    addBookingPhoto(bookingId: ID!, photoUrl: String!): Booking
     addBookingPhotos(bookingId: ID!, photoUrls: [String!]!): Booking
     updateBookingDetails(id: ID!, input: UpdateBookingInput!): Booking
     deleteBooking(id: ID!): Boolean
