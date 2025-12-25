@@ -40,4 +40,13 @@ coverage/
 # Temporary Files
 tmp/
 temp/
-uploads/
+
+# Uploads
+app/services/uploads/uploads/*.jpg
+app/services/uploads/uploads/*.jpeg
+app/services/uploads/uploads/*.png
+app/services/uploads/uploads/*.gif
+app/services/uploads/uploads/*.webp
+app/services/uploads/uploads/*.svg
+app/services/uploads/uploads/*.tiff
+app/services/uploads/uploads/*.ico

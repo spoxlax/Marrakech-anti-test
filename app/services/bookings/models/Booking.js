@@ -51,6 +51,10 @@ const bookingSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  professionalPhotos: {
+    type: [String],
+    default: [],
+  },
 });
 
 module.exports = mongoose.model('Booking', bookingSchema);

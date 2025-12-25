@@ -1,5 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
-import React, { Suspense, lazy } from 'react';
+import { Suspense, lazy } from 'react';
 import LoadingSpinner from './components/LoadingSpinner';
 
 // Lazy load pages
@@ -14,6 +14,11 @@ const Checkout = lazy(() => import('./pages/Checkout'));
 const BookingConfirmation = lazy(() => import('./pages/BookingConfirmation'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const Unauthorized = lazy(() => import('./pages/Unauthorized'));
+
+// Customer Pages
+const CustomerLayout = lazy(() => import('./layouts/CustomerLayout'));
+const MyBookings = lazy(() => import('./pages/customer/MyBookings'));
+const BookingDetails = lazy(() => import('./pages/customer/BookingDetails'));
 
 // Admin Pages
 const AdminLayout = lazy(() => import('./layouts/AdminLayout'));
@@ -58,6 +63,16 @@ function App() {
           <Route path="activities/create" element={<CreateActivity />} />
           <Route path="activities/edit/:id" element={<EditActivity />} />
           <Route path="bookings" element={<AdminBookings />} />
+        </Route>
+
+        {/* Customer Routes */}
+        <Route path="/my-bookings" element={
+          <ProtectedRoute allowedRoles={['customer']}>
+            <CustomerLayout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<MyBookings />} />
+          <Route path=":id" element={<BookingDetails />} />
         </Route>
 
         {/* Hosting Routes */}

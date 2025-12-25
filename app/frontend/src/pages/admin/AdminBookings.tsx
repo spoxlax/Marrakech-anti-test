@@ -1,44 +1,77 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, gql } from '@apollo/client';
-import { CalendarCheck, Search, Filter } from 'lucide-react';
+import { CalendarCheck, Search, Filter, Camera, Trash2, Edit } from 'lucide-react';
+import PhotoUploadModal from '../../components/PhotoUploadModal';
+import EditBookingModal from '../../components/EditBookingModal';
 
 const ADMIN_BOOKINGS = gql`
   query AdminBookings($search: String) {
     allBookings(search: $search) {
-      id
-      activityId
-      date
-      confirmationCode
-      persons {
-        adults
-        children
-      }
-      totalPrice
-      status
-      customerInfo {
-        firstName
-        lastName
-        email
-        phone
-      }
-      activity {
-        title
-      }
-      vendor {
         id
-        role
-      }
+        activityId
+        date
+        confirmationCode
+      persons {
+            adults
+            children
+        }
+        totalPrice
+        status
+      customerInfo {
+            firstName
+            lastName
+            email
+            phone
+        }
+      activity {
+            title
+        }
+      vendor {
+            id
+            role
+        }
+        professionalPhotos
     }
-  }
+}
 `;
 
 const UPDATE_BOOKING_STATUS = gql`
   mutation UpdateBookingStatus($id: ID!, $status: String!) {
     updateBookingStatus(id: $id, status: $status) {
-      id
-      status
+        id
+        status
     }
-  }
+}
+`;
+
+const ADD_BOOKING_PHOTOS = gql`
+  mutation AddBookingPhotos($bookingId: ID!, $photoUrls: [String!]!) {
+    addBookingPhotos(bookingId: $bookingId, photoUrls: $photoUrls) {
+        id
+        professionalPhotos
+    }
+}
+`;
+
+const DELETE_BOOKING = gql`
+  mutation DeleteBooking($id: ID!) {
+    deleteBooking(id: $id)
+}
+`;
+
+const UPDATE_BOOKING_DETAILS = gql`
+  mutation UpdateBookingDetails($id: ID!, $input: UpdateBookingInput!) {
+    updateBookingDetails(id: $id, input: $input) {
+        id
+        date
+      persons {
+            adults
+            children
+        }
+        totalPrice
+        status
+    }
+}
 `;
 
 type AdminBookingRow = {
@@ -64,18 +97,28 @@ type AdminBookingRow = {
         id: string;
         role: string;
     } | null;
+    professionalPhotos?: string[];
 };
 
 const AdminBookings: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState<'ALL' | 'ADMIN' | 'VENDOR'>('ALL');
 
+    // Modals state
+    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+    const [selectedBookingForEdit, setSelectedBookingForEdit] = useState<any>(null);
+
     const { loading, error, data, refetch } = useQuery(ADMIN_BOOKINGS, {
         variables: { search: searchTerm },
-        fetchPolicy: 'network-only' // Ensure fresh data for search
+        fetchPolicy: 'network-only'
     });
 
     const [updateStatus] = useMutation(UPDATE_BOOKING_STATUS);
+    const [addPhotos] = useMutation(ADD_BOOKING_PHOTOS);
+    const [deleteBooking] = useMutation(DELETE_BOOKING);
+    const [updateDetails] = useMutation(UPDATE_BOOKING_DETAILS);
 
     const handleStatusChange = async (id: string, newStatus: string) => {
         try {
@@ -86,6 +129,66 @@ const AdminBookings: React.FC = () => {
             alert("Failed to update status");
         }
     };
+
+    // --- Photo Upload Handlers ---
+    const openUploadModal = (bookingId: string) => {
+        setSelectedBookingId(bookingId);
+        setIsUploadModalOpen(true);
+    };
+
+    const handlePhotosUploaded = async (photoUrls: string[]) => {
+        if (!selectedBookingId) return;
+        console.log('Uploading photos for booking:', selectedBookingId);
+        console.log('Photo URLs:', photoUrls);
+        try {
+            await addPhotos({ variables: { bookingId: selectedBookingId, photoUrls } });
+            refetch();
+            alert('Photos added successfully!');
+        } catch (err: any) {
+            console.error("Mutation Error Full Object:", JSON.stringify(err, null, 2));
+            if (err.networkError) {
+                console.error("Network Error:", err.networkError);
+                // @ts-ignore
+                if (err.networkError.result) {
+                    // @ts-ignore
+                    console.error("Network Error Result:", err.networkError.result);
+                }
+            }
+            if (err.graphQLErrors) {
+                console.error("GraphQL Errors:", err.graphQLErrors);
+            }
+            alert("Failed to link photos to booking");
+        }
+    };
+
+    // --- Delete Handler ---
+    const handleDelete = async (id: string) => {
+        if (window.confirm("Are you sure you want to delete this booking? This action cannot be undone.")) {
+            try {
+                await deleteBooking({ variables: { id } });
+                refetch();
+            } catch (err) {
+                console.error(err);
+                alert("Failed to delete booking");
+            }
+        }
+    };
+
+    // --- Edit Handler ---
+    const openEditModal = (booking: any) => {
+        setSelectedBookingForEdit(booking);
+        setIsEditModalOpen(true);
+    };
+
+    const handleEditSave = async (id: string, updates: any) => {
+        try {
+            await updateDetails({ variables: { id, input: updates } });
+            refetch();
+        } catch (err) {
+            throw err; // Modal handles alert
+        }
+    };
+
     let bookings: AdminBookingRow[] = data?.allBookings || [];
 
     // Client-side filtering for vendor role since it's a resolved field
@@ -102,22 +205,18 @@ const AdminBookings: React.FC = () => {
                     <h1 className="text-2xl font-bold">Booking Request Management</h1>
                     <p className="text-gray-500 text-sm">View and manage bookings for your listings.</p>
                 </div>
-
+                {/* Search & Filter Controls */}
                 <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                    {/* Search Bar */}
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input
                             type="text"
-                            placeholder="Search code, name, email..."
+                            placeholder="Search..."
                             className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm w-full sm:w-64 focus:ring-2 focus:ring-black focus:outline-none"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            autoFocus
                         />
                     </div>
-
-                    {/* Filter Dropdown */}
                     <div className="relative">
                         <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <select
@@ -146,10 +245,9 @@ const AdminBookings: React.FC = () => {
                                     <th className="px-6 py-4">Code</th>
                                     <th className="px-6 py-4">Activity</th>
                                     <th className="px-6 py-4">Guest</th>
-                                    <th className="px-6 py-4">Participants</th>
-                                    <th className="px-6 py-4">Date</th>
+                                    <th className="px-6 py-4">Details</th>
                                     <th className="px-6 py-4">Status</th>
-                                    <th className="px-6 py-4">Total</th>
+                                    <th className="px-6 py-4">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
@@ -169,25 +267,25 @@ const AdminBookings: React.FC = () => {
                                                 {booking.customerInfo?.firstName || 'Guest'} {booking.customerInfo?.lastName || ''}
                                             </div>
                                             <div className="text-xs text-gray-500">{booking.customerInfo?.email}</div>
-                                            <div className="text-xs text-gray-500">{booking.customerInfo?.phone}</div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="font-medium text-gray-900">
-                                                {(booking.persons?.adults || 0) + (booking.persons?.children || 0)} Guests
+                                            <div className="text-sm font-medium">
+                                                {new Date(parseInt(booking.date)).toLocaleDateString()}
                                             </div>
-                                            <div className="text-xs text-gray-500">{booking.persons?.adults || 0} adults,</div>
-                                            <div className="text-xs text-gray-500">{booking.persons?.children || 0} children</div>
+                                            <div className="text-xs text-gray-500">
+                                                {(booking.persons?.adults || 0) + (booking.persons?.children || 0)} Guests • ${booking.totalPrice}
+                                            </div>
                                         </td>
-                                        <td className="px-6 py-4 text-gray-600">{booking.date}</td>
                                         <td className="px-6 py-4">
                                             <select
                                                 value={booking.status}
                                                 onChange={(e) => handleStatusChange(booking.id, e.target.value)}
-                                                className={`text-xs font-medium px-2 py-1 rounded-full border-none focus:ring-2 focus:ring-black cursor-pointer
+                                                className={`text - xs font - medium px - 2 py - 1 rounded - full border - none focus: ring - 2 focus: ring - black cursor - pointer
                                                     ${booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
                                                         booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                                            booking.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}
-                                                `}
+                                                            booking.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+                                                    }
+`}
                                             >
                                                 <option value="pending">Pending</option>
                                                 <option value="confirmed">Confirmed</option>
@@ -195,7 +293,36 @@ const AdminBookings: React.FC = () => {
                                                 <option value="completed">Completed</option>
                                             </select>
                                         </td>
-                                        <td className="px-6 py-4 font-medium text-gray-900">${booking.totalPrice}</td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => openUploadModal(booking.id)}
+                                                    className="p-1.5 text-gray-500 hover:text-[#FF385C] hover:bg-pink-50 rounded transition-colors relative"
+                                                    title="Upload Photos"
+                                                >
+                                                    <Camera size={18} />
+                                                    {booking.professionalPhotos && booking.professionalPhotos.length > 0 && (
+                                                        <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-green-500 text-[8px] text-white">
+                                                            {booking.professionalPhotos.length}
+                                                        </span>
+                                                    )}
+                                                </button>
+                                                <button
+                                                    onClick={() => openEditModal(booking)}
+                                                    className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                    title="Edit Booking"
+                                                >
+                                                    <Edit size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(booking.id)}
+                                                    className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                    title="Delete Booking"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -209,6 +336,20 @@ const AdminBookings: React.FC = () => {
                     </>
                 )}
             </div>
+
+            {/* Modals */}
+            <PhotoUploadModal
+                isOpen={isUploadModalOpen}
+                onClose={() => setIsUploadModalOpen(false)}
+                onUpload={handlePhotosUploaded}
+                bookingId={selectedBookingId || ''}
+            />
+            <EditBookingModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                onSave={handleEditSave}
+                booking={selectedBookingForEdit}
+            />
         </div>
     );
 };

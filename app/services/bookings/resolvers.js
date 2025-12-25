@@ -96,6 +96,86 @@ const resolvers = {
 
       return await Booking.findByIdAndUpdate(id, { status }, { new: true });
     },
+    addBookingPhoto: async (_, { bookingId, photoUrl }, { user }) => {
+      if (!user) throw new Error('Unauthorized');
+      
+      const booking = await Booking.findById(bookingId);
+      if (!booking) throw new Error('Booking not found');
+
+      // Authorization: Admin or the Vendor who owns the booking
+      const isVendorOwner = user.role === 'vendor' && booking.vendorId.toString() === user.userId;
+      const isAdmin = user.role === 'admin';
+
+      if (!isAdmin && !isVendorOwner) {
+        throw new Error('Forbidden: You cannot upload photos for this booking');
+      }
+
+      booking.professionalPhotos.push(photoUrl);
+      await booking.save();
+      return booking;
+    },
+    addBookingPhotos: async (_, { bookingId, photoUrls }, { user }) => {
+      console.log('addBookingPhotos resolver called with:', { bookingId, photoUrls, user: user ? user.userId : 'none' });
+      if (!user) throw new Error('Unauthorized');
+      
+      const booking = await Booking.findById(bookingId);
+      if (!booking) throw new Error('Booking not found');
+
+      const isVendorOwner = user.role === 'vendor' && booking.vendorId.toString() === user.userId;
+      const isAdmin = user.role === 'admin';
+
+      if (!isAdmin && !isVendorOwner) {
+        throw new Error('Forbidden');
+      }
+
+      if (!booking.professionalPhotos) {
+        booking.professionalPhotos = [];
+      }
+      booking.professionalPhotos.push(...photoUrls);
+      await booking.save();
+      return booking;
+    },
+    updateBookingDetails: async (_, { id, input }, { user }) => {
+      if (!user) throw new Error('Unauthorized');
+      
+      const booking = await Booking.findById(id);
+      if (!booking) throw new Error('Booking not found');
+
+      const isVendorOwner = user.role === 'vendor' && booking.vendorId.toString() === user.userId;
+      const isAdmin = user.role === 'admin';
+
+      if (!isAdmin && !isVendorOwner) {
+        throw new Error('Forbidden');
+      }
+
+      // Update fields
+      if (input.date) booking.date = input.date;
+      if (input.persons) booking.persons = input.persons;
+      if (input.totalPrice) booking.totalPrice = input.totalPrice;
+      if (input.status) booking.status = input.status;
+      if (input.customerInfo) {
+          booking.customerInfo = { ...booking.customerInfo, ...input.customerInfo };
+      }
+
+      await booking.save();
+      return booking;
+    },
+    deleteBooking: async (_, { id }, { user }) => {
+      if (!user) throw new Error('Unauthorized');
+      
+      const booking = await Booking.findById(id);
+      if (!booking) throw new Error('Booking not found');
+
+      const isVendorOwner = user.role === 'vendor' && booking.vendorId.toString() === user.userId;
+      const isAdmin = user.role === 'admin';
+
+      if (!isAdmin && !isVendorOwner) {
+        throw new Error('Forbidden');
+      }
+
+      await Booking.findByIdAndDelete(id);
+      return true;
+    },
   },
   Booking: {
     __resolveReference(bookingReference) {

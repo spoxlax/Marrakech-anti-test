@@ -8,10 +8,7 @@ const typeDefs = gql`
     allBookings(filter: String, search: String): [Booking]
   }
 
-  extend type Mutation {
-    createBooking(input: CreateBookingInput!): Booking
-    updateBookingStatus(id: ID!, status: String!): Booking
-  }
+
 
   type Booking @key(fields: "id") {
     id: ID!
@@ -27,6 +24,16 @@ const typeDefs = gql`
     confirmationCode: String
     activity: Activity
     vendor: User
+    professionalPhotos: [String]
+  }
+
+  extend type Mutation {
+    createBooking(input: CreateBookingInput!): Booking
+    updateBookingStatus(id: ID!, status: String!): Booking
+    addBookingPhoto(bookingId: ID!, photoUrl: String!): Booking
+    addBookingPhotos(bookingId: ID!, photoUrls: [String!]!): Booking
+    updateBookingDetails(id: ID!, input: UpdateBookingInput!): Booking
+    deleteBooking(id: ID!): Boolean
   }
 
   extend type Activity @key(fields: "id") {
@@ -57,6 +64,14 @@ const typeDefs = gql`
     persons: PersonsInput!
     totalPrice: Float!
     paymentMethod: String
+  }
+
+  input UpdateBookingInput {
+    date: String
+    persons: PersonsInput
+    totalPrice: Float
+    status: String
+    customerInfo: CustomerInfoInput
   }
 
   input CustomerInfoInput {

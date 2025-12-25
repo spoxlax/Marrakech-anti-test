@@ -60,11 +60,14 @@ const Navbar: React.FC = () => {
                                             <div className="px-4 py-3 hover:bg-neutral-100 font-semibold cursor-default">
                                                 Welcome, {user.firstName}
                                             </div>
-                                            {user.role === 'vendor' && (
-                                                <Link to="/hosting/bookings" className="px-4 py-3 hover:bg-neutral-100">My Trips</Link>
-                                            )}
                                             {user.role === 'admin' && (
-                                                <Link to="/admin" className="px-4 py-3 hover:bg-neutral-100">Admin Dashboard</Link>
+                                                <Link to="/admin" className="block px-4 py-2 hover:bg-gray-100 font-semibold" onClick={() => setIsMenuOpen(false)}>Admin Panel</Link>
+                                            )}
+                                            {user.role === 'vendor' && (
+                                                <Link to="/hosting" className="block px-4 py-2 hover:bg-gray-100 font-semibold" onClick={() => setIsMenuOpen(false)}>Switch to Hosting</Link>
+                                            )}
+                                            {user.role === 'customer' && (
+                                                <Link to="/my-bookings" className="block px-4 py-2 hover:bg-gray-100" onClick={() => setIsMenuOpen(false)}>My Bookings</Link>
                                             )}
                                             <Link to="/saved" className="px-4 py-3 hover:bg-neutral-100">Wishlists</Link>
                                             <hr />

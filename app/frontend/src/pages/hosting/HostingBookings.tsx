@@ -1,96 +1,296 @@
-import React from 'react';
-import { useQuery, gql } from '@apollo/client';
+import React, { useState } from 'react';
+import { useQuery, useMutation, gql } from '@apollo/client';
+import { CalendarCheck, Search, Filter, Camera, Trash2, Edit } from 'lucide-react';
+import PhotoUploadModal from '../../components/PhotoUploadModal';
+import EditBookingModal from '../../components/EditBookingModal';
 
 const VENDOR_BOOKINGS = gql`
   query VendorBookings {
     vendorBookings {
-      id
-      activityId
-      date
+        id
+        activityId
+        date
+        confirmationCode
       persons {
-        adults
-        children
-      }
-      totalPrice
-      status
+            adults
+            children
+        }
+        totalPrice
+        status
       customerInfo {
-        firstName
-        lastName
-        email
-      }
+            firstName
+            lastName
+            email
+            phone
+        }
+      activity {
+            title
+        }
+        professionalPhotos
     }
-  }
+}
+`;
+
+const UPDATE_BOOKING_STATUS = gql`
+  mutation UpdateBookingStatus($id: ID!, $status: String!) {
+    updateBookingStatus(id: $id, status: $status) {
+        id
+        status
+    }
+}
+`;
+
+const ADD_BOOKING_PHOTOS = gql`
+  mutation AddBookingPhotos($bookingId: ID!, $photoUrls: [String!]!) {
+    addBookingPhotos(bookingId: $bookingId, photoUrls: $photoUrls) {
+        id
+        professionalPhotos
+    }
+}
+`;
+
+const DELETE_BOOKING = gql`
+  mutation DeleteBooking($id: ID!) {
+    deleteBooking(id: $id)
+}
+`;
+
+const UPDATE_BOOKING_DETAILS = gql`
+  mutation UpdateBookingDetails($id: ID!, $input: UpdateBookingInput!) {
+    updateBookingDetails(id: $id, input: $input) {
+        id
+        date
+      persons {
+            adults
+            children
+        }
+        totalPrice
+        status
+    }
+}
 `;
 
 type VendorBookingRow = {
     id: string;
     date: string;
     status: string;
+    confirmationCode?: string;
     totalPrice: number;
     customerInfo?: {
         firstName?: string | null;
         lastName?: string | null;
         email?: string | null;
+        phone?: string | null;
     } | null;
+    persons?: {
+        adults?: number | null;
+        children?: number | null;
+    } | null;
+    activity?: {
+        title?: string | null;
+    } | null;
+    professionalPhotos?: string[];
 };
 
 const HostingBookings: React.FC = () => {
-    const { loading, error, data } = useQuery(VENDOR_BOOKINGS);
+    const { loading, error, data, refetch } = useQuery(VENDOR_BOOKINGS, {
+        fetchPolicy: 'network-only'
+    });
 
-    if (loading) return <div className="p-8">Loading bookings...</div>;
-    // Note: If vendorBookings resolver is not implemented yet or fails, this will show an error.
-    // Assuming it was part of the original schema as viewed earlier.
-    if (error) return <div className="p-8 text-red-500">Error: {error.message}</div>;
+    const [updateStatus] = useMutation(UPDATE_BOOKING_STATUS);
+    const [addPhotos] = useMutation(ADD_BOOKING_PHOTOS);
+    const [deleteBooking] = useMutation(DELETE_BOOKING);
+    const [updateDetails] = useMutation(UPDATE_BOOKING_DETAILS);
+
+    // Modals state
+    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+    const [selectedBookingForEdit, setSelectedBookingForEdit] = useState<any>(null);
+
+    const handleStatusChange = async (id: string, newStatus: string) => {
+        try {
+            await updateStatus({ variables: { id, status: newStatus } });
+            refetch();
+        } catch (e) {
+            console.error("Failed to update status", e);
+            alert("Failed to update status");
+        }
+    };
+
+    // --- Photo Upload Handlers ---
+    const openUploadModal = (bookingId: string) => {
+        setSelectedBookingId(bookingId);
+        setIsUploadModalOpen(true);
+    };
+
+    const handlePhotosUploaded = async (photoUrls: string[]) => {
+        if (!selectedBookingId) return;
+        try {
+            await addPhotos({ variables: { bookingId: selectedBookingId, photoUrls } });
+            refetch();
+            alert('Photos added successfully!');
+        } catch (err: any) {
+            console.error("Mutation Error Full Object:", JSON.stringify(err, null, 2));
+            alert("Failed to link photos to booking");
+        }
+    };
+
+    // --- Delete Handler ---
+    const handleDelete = async (id: string) => {
+        if (window.confirm("Are you sure you want to delete this booking? This action cannot be undone.")) {
+            try {
+                await deleteBooking({ variables: { id } });
+                refetch();
+            } catch (err) {
+                console.error(err);
+                alert("Failed to delete booking");
+            }
+        }
+    };
+
+    // --- Edit Handler ---
+    const openEditModal = (booking: any) => {
+        setSelectedBookingForEdit(booking);
+        setIsEditModalOpen(true);
+    };
+
+    const handleEditSave = async (id: string, updates: any) => {
+        try {
+            await updateDetails({ variables: { id, input: updates } });
+            refetch();
+        } catch (err) {
+            throw err; // Modal handles alert
+        }
+    };
 
     const bookings: VendorBookingRow[] = data?.vendorBookings || [];
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold">Reservations</h1>
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold">Your Bookings</h1>
+                    <p className="text-gray-500 text-sm">Manage bookings for your experiences.</p>
+                </div>
+            </div>
 
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
-                            <th className="px-6 py-4">Guest</th>
-                            <th className="px-6 py-4">Date</th>
-                            <th className="px-6 py-4">Status</th>
-                            <th className="px-6 py-4">Total</th>
-                            <th className="px-6 py-4 text-right">Details</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {bookings.map((booking) => (
-                            <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-6 py-4">
-                                    <div className="font-medium text-gray-900">
-                                        {booking.customerInfo?.firstName || 'Guest'} {booking.customerInfo?.lastName || ''}
-                                    </div>
-                                    <div className="text-xs text-gray-500">{booking.customerInfo?.email}</div>
-                                </td>
-                                <td className="px-6 py-4 text-gray-600">{booking.date}</td>
-                                <td className="px-6 py-4">
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
-                                        ${booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                                            booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}
-                                     `}>
-                                        {booking.status}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 font-medium text-gray-900">${booking.totalPrice}</td>
-                                <td className="px-6 py-4 text-right">
-                                    <button className="text-[#FF385C] hover:underline text-sm font-medium">View</button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-                {bookings.length === 0 && (
-                    <div className="p-12 text-center text-gray-500 text-sm">
-                        No bookings found.
-                    </div>
+                {loading && bookings.length === 0 ? (
+                    <div className="p-12 text-center text-gray-500 text-sm">Loading your bookings...</div>
+                ) : error ? (
+                    <div className="p-12 text-center text-red-500 text-sm">Error loading bookings: {error.message}</div>
+                ) : (
+                    <>
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
+                                    <th className="px-6 py-4">Code</th>
+                                    <th className="px-6 py-4">Activity</th>
+                                    <th className="px-6 py-4">Guest</th>
+                                    <th className="px-6 py-4">Details</th>
+                                    <th className="px-6 py-4">Status</th>
+                                    <th className="px-6 py-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {bookings.map((booking) => (
+                                    <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-6 py-4 font-mono text-xs font-medium text-gray-500">
+                                            {booking.confirmationCode || '-'}
+                                        </td>
+                                        <td className="px-6 py-4 font-medium text-gray-900">
+                                            {booking.activity?.title || 'Unknown Activity'}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="font-medium text-gray-900">
+                                                {booking.customerInfo?.firstName || 'Guest'} {booking.customerInfo?.lastName || ''}
+                                            </div>
+                                            <div className="text-xs text-gray-500">{booking.customerInfo?.email}</div>
+                                            <div className="text-xs text-gray-500">{booking.customerInfo?.phone}</div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="text-sm font-medium">
+                                                {new Date(parseInt(booking.date)).toLocaleDateString()}
+                                            </div>
+                                            <div className="text-xs text-gray-500">
+                                                {(booking.persons?.adults || 0) + (booking.persons?.children || 0)} Guests • ${booking.totalPrice}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <select
+                                                value={booking.status}
+                                                onChange={(e) => handleStatusChange(booking.id, e.target.value)}
+                                                className={`text - xs font - medium px - 2 py - 1 rounded - full border - none focus: ring - 2 focus: ring - black cursor - pointer
+                                                    ${booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                                        booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                                            booking.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+                                                    }
+`}
+                                            >
+                                                <option value="pending">Pending</option>
+                                                <option value="confirmed">Confirmed</option>
+                                                <option value="cancelled">Cancelled</option>
+                                                <option value="completed">Completed</option>
+                                            </select>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={() => openUploadModal(booking.id)}
+                                                    className="p-1.5 text-gray-500 hover:text-[#FF385C] hover:bg-pink-50 rounded transition-colors relative"
+                                                    title="Upload Photos"
+                                                >
+                                                    <Camera size={18} />
+                                                    {booking.professionalPhotos && booking.professionalPhotos.length > 0 && (
+                                                        <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-green-500 text-[8px] text-white">
+                                                            {booking.professionalPhotos.length}
+                                                        </span>
+                                                    )}
+                                                </button>
+                                                <button
+                                                    onClick={() => openEditModal(booking)}
+                                                    className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                    title="Edit Booking"
+                                                >
+                                                    <Edit size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(booking.id)}
+                                                    className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                    title="Delete Booking"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        {bookings.length === 0 && (
+                            <div className="p-12 text-center text-gray-500 text-sm flex flex-col items-center gap-2">
+                                <CalendarCheck size={40} className="text-gray-300" />
+                                <p>No bookings found.</p>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
+
+            {/* Modals */}
+            <PhotoUploadModal
+                isOpen={isUploadModalOpen}
+                onClose={() => setIsUploadModalOpen(false)}
+                onUpload={handlePhotosUploaded}
+                bookingId={selectedBookingId || ''}
+            />
+            <EditBookingModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                onSave={handleEditSave}
+                booking={selectedBookingForEdit}
+            />
         </div>
     );
 };
