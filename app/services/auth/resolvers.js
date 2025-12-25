@@ -7,7 +7,7 @@ const resolvers = {
     me: async (_, __, { token }) => {
       if (!token) return null;
       try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
         return await User.findById(decoded.userId);
       } catch (err) {
         return null;

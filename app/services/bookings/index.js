@@ -25,7 +25,7 @@ async function startServer() {
       if (authHeader.startsWith('Bearer ')) {
         const token = authHeader.replace('Bearer ', '');
         try {
-          user = jwt.verify(token, process.env.JWT_SECRET);
+          user = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
         } catch (e) {
           user = null;
         }

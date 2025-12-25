@@ -1,34 +1,81 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
-import { useApolloClient } from '@apollo/client';
+import { useApolloClient, gql } from '@apollo/client';
 import { AuthContext } from './authCore';
 import type { User } from './authCore';
+
+const VERIFY_ME = gql`
+  query VerifyMe {
+    me {
+      id
+      email
+      role
+      firstName
+      lastName
+    }
+  }
+`;
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const client = useApolloClient();
     const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-    const [user, setUser] = useState<User | null>(() => {
-        const storedToken = localStorage.getItem('token');
-        if (!storedToken) {
-            return null;
-        }
-        try {
-            const decoded = jwtDecode<User & { exp: number }>(storedToken);
-            const currentTime = Date.now() / 1000;
+    const [loading, setLoading] = useState<boolean>(true);
+    const [user, setUser] = useState<User | null>(null);
 
-            if (decoded.exp < currentTime) {
-                console.warn("Token expired");
-                localStorage.removeItem('token');
-                return null;
+    useEffect(() => {
+        const verifyToken = async () => {
+            const storedToken = localStorage.getItem('token');
+            if (!storedToken) {
+                setLoading(false);
+                return;
             }
 
-            return decoded;
-        } catch (e) {
-            console.error("Invalid token", e);
-            localStorage.removeItem('token');
-            return null;
-        }
-    });
+            // 1. Basic Client-side Expiry Check
+            try {
+                const decoded = jwtDecode<User & { exp: number }>(storedToken);
+                const currentTime = Date.now() / 1000;
+                if (decoded.exp < currentTime) {
+                    throw new Error("Expired");
+                }
+            } catch (e) {
+                console.warn(`{${e}}: Token expired or invalid format`);
+                localStorage.removeItem('token');
+                setToken(null);
+                setLoading(false);
+                return;
+            }
+
+            // 2. Server-side Verification
+            try {
+                const { data } = await client.query({
+                    query: VERIFY_ME,
+                    fetchPolicy: 'network-only'
+                });
+
+                if (data && data.me) {
+                    setUser({
+                        userId: data.me.id,
+                        email: data.me.email,
+                        role: data.me.role,
+                        firstName: data.me.firstName,
+                        lastName: data.me.lastName
+                    });
+                    setToken(storedToken);
+                } else {
+                    throw new Error("Invalid session data");
+                }
+            } catch (err) {
+                console.error("Token verification failed:", err);
+                localStorage.removeItem('token');
+                setToken(null);
+                setUser(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        verifyToken();
+    }, [client]);
 
     const login = (newToken: string) => {
         setToken(newToken);
@@ -49,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!user }}>
+        <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!user, loading }}>
             {children}
         </AuthContext.Provider>
     );
