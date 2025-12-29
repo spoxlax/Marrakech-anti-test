@@ -20,8 +20,18 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['customer', 'admin', 'vendor'],
+    enum: ['customer', 'admin', 'vendor', 'employee'],
     default: 'customer',
+  },
+  parentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null,
+  },
+  profileId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Profile',
+    default: null,
   },
   createdAt: {
     type: Date,

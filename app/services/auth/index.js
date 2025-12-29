@@ -6,7 +6,8 @@ const jwt = require('jsonwebtoken');
 const helmet = require('helmet');
 const cors = require('cors');
 const { typeDefs } = require('./schema');
-const { resolvers } = require('./resolvers');
+const resolvers = require('./resolvers');
+const seedAdmin = require('./seed');
 require('dotenv').config();
 
 const app = express();
@@ -27,7 +28,10 @@ if (!process.env.JWT_SECRET) {
 
 mongoose
   .connect(process.env.MONGO_URI || 'mongodb://localhost:27017/tourism-auth')
-  .then(() => console.log('MongoDB connected'))
+  .then(async () => {
+    console.log('MongoDB connected');
+    await seedAdmin();
+  })
   .catch(err => console.error(err));
 
 async function startServer() {

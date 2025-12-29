@@ -1,18 +1,24 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Map, Settings, LogOut, Menu, X, CalendarCheck } from 'lucide-react';
+import { LayoutDashboard, Users, Map, Settings, LogOut, Menu, X, CalendarCheck, Shield, UserPlus } from 'lucide-react';
 
 const AdminLayout: React.FC = () => {
     const location = useLocation();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-    const navItems = [
+    const mainNavItems = [
         { label: 'Dashboard', path: '/admin', icon: LayoutDashboard },
-        { label: 'Users', path: '/admin/users', icon: Users },
         { label: 'Activities', path: '/admin/activities', icon: Map },
-        { label: 'Bookings', path: '/admin/bookings', icon: CalendarCheck }, // Admin Bookings
-        { label: 'Settings', path: '/admin/settings', icon: Settings },
+        { label: 'Bookings', path: '/admin/bookings', icon: CalendarCheck },
     ];
+
+    const managementNavItems = [
+        { label: 'All Users', path: '/admin/users', icon: Users },
+        { label: 'My Team', path: '/admin/team', icon: UserPlus },
+        { label: 'Profiles', path: '/admin/profiles', icon: Shield },
+    ];
+
+    const settingsItem = { label: 'Settings', path: '/admin/settings', icon: Settings };
 
     return (
         <div className="min-h-screen bg-gray-50 flex font-sans text-[#222222]">
@@ -38,34 +44,76 @@ const AdminLayout: React.FC = () => {
                     </button>
                 </div>
 
-                <nav className="p-4 space-y-1">
-                    {navItems.map((item) => {
-                        const isActive = location.pathname === item.path || (item.path !== '/admin' && location.pathname.startsWith(item.path));
+                <div className="flex flex-col h-[calc(100vh-4rem)] overflow-y-auto">
+                    <nav className="p-4 space-y-1">
+                        {mainNavItems.map((item) => {
+                            const isActive = location.pathname === item.path || (item.path !== '/admin' && location.pathname.startsWith(item.path));
+                            return (
+                                <Link
+                                    key={item.path}
+                                    to={item.path}
+                                    onClick={() => setIsSidebarOpen(false)}
+                                    className={`
+                                        flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors
+                                        ${isActive
+                                            ? 'bg-rose-50 text-[#FF385C]'
+                                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}
+                                    `}
+                                >
+                                    <item.icon size={20} />
+                                    {item.label}
+                                </Link>
+                            );
+                        })}
+                    </nav>
 
-                        return (
-                            <Link
-                                key={item.path}
-                                to={item.path}
-                                onClick={() => setIsSidebarOpen(false)}
-                                className={`
-                                    flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors
-                                    ${isActive
-                                        ? 'bg-rose-50 text-[#FF385C]'
-                                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}
-                                `}
-                            >
-                                <item.icon size={20} />
-                                {item.label}
-                            </Link>
-                        );
-                    })}
-                </nav>
+                    <div className="mt-2 pt-2 border-t border-gray-100 px-4">
+                        <h3 className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                            Management
+                        </h3>
+                        <nav className="space-y-1">
+                            {managementNavItems.map((item) => {
+                                const isActive = location.pathname.startsWith(item.path);
+                                return (
+                                    <Link
+                                        key={item.path}
+                                        to={item.path}
+                                        onClick={() => setIsSidebarOpen(false)}
+                                        className={`
+                                            flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors
+                                            ${isActive
+                                                ? 'bg-rose-50 text-[#FF385C]'
+                                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}
+                                        `}
+                                    >
+                                        <item.icon size={20} />
+                                        {item.label}
+                                    </Link>
+                                );
+                            })}
+                        </nav>
+                    </div>
 
-                <div className="absolute bottom-4 left-0 w-full px-4">
-                    <button className="flex items-center gap-3 px-4 py-3 w-full text-left rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-red-500 transition-colors">
-                        <LogOut size={20} />
-                        Sign Out
-                    </button>
+                    <div className="mt-auto p-4 border-t border-gray-100">
+                        <Link
+                            to={settingsItem.path}
+                            onClick={() => setIsSidebarOpen(false)}
+                            className={`
+                                flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors
+                                ${location.pathname.startsWith(settingsItem.path)
+                                    ? 'bg-rose-50 text-[#FF385C]'
+                                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}
+                            `}
+                        >
+                            <settingsItem.icon size={20} />
+                            {settingsItem.label}
+                        </Link>
+
+                        <button className="flex items-center gap-3 px-4 py-3 w-full text-left rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-red-500 transition-colors mt-2">
+                            <LogOut size={20} />
+                            Sign Out
+                        </button>
+                    </div>
                 </div>
             </aside>
 

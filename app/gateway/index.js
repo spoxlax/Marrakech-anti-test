@@ -53,7 +53,7 @@ async function startServer() {
   app.use(cors({
     origin: process.env.NODE_ENV === 'production'
       ? ['https://your-production-domain.com'] // Update this with actual domain
-      : ['http://localhost:5173', 'http://localhost:4173', 'http://localhost:3000'],
+      : ['http://localhost:5173', 'http://localhost:4173', 'http://localhost:3000', 'http://127.0.0.1:3000'],
     credentials: true
   })); // Configure strict CORS in production
 

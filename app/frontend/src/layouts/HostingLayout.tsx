@@ -1,17 +1,25 @@
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, List, CalendarCheck, Settings, LogOut, Menu, X, PlusCircle } from 'lucide-react';
+import { LayoutDashboard, List, CalendarCheck, Settings, LogOut, Menu, X, PlusCircle, Users, Shield } from 'lucide-react';
+import { useAuth } from '../context/authCore';
 
 const HostingLayout: React.FC = () => {
     const location = useLocation();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const { user } = useAuth();
 
-    const navItems = [
+    const mainNavItems = [
         { label: 'Dashboard', path: '/hosting', icon: LayoutDashboard },
         { label: 'My Listings', path: '/hosting/listings', icon: List },
         { label: 'Bookings', path: '/hosting/bookings', icon: CalendarCheck },
-        { label: 'Settings', path: '/hosting/settings', icon: Settings },
     ];
+
+    const managementNavItems = user?.role === 'vendor' ? [
+        { label: 'Team', path: '/hosting/team', icon: Users },
+        { label: 'Profiles', path: '/hosting/profiles', icon: Shield },
+    ] : [];
+
+    const settingsItem = { label: 'Settings', path: '/hosting/settings', icon: Settings };
 
     return (
         <div className="min-h-screen bg-gray-50 flex font-sans text-[#222222]">
@@ -44,30 +52,81 @@ const HostingLayout: React.FC = () => {
                     </Link>
                 </div>
 
-                <nav className="p-2 space-y-1">
-                    {navItems.map((item) => {
-                        const isActive = location.pathname === item.path || (item.path !== '/hosting' && location.pathname.startsWith(item.path));
+                <div className="flex flex-col h-[calc(100vh-8rem)] overflow-y-auto">
+                    <nav className="p-2 space-y-1">
+                        {mainNavItems.map((item) => {
+                            const isActive = location.pathname === item.path || (item.path !== '/hosting' && location.pathname.startsWith(item.path));
+                            return (
+                                <Link
+                                    key={item.path}
+                                    to={item.path}
+                                    onClick={() => setIsSidebarOpen(false)}
+                                    className={`
+                                        flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors
+                                        ${isActive
+                                            ? 'bg-rose-50 text-[#FF385C]'
+                                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}
+                                    `}
+                                >
+                                    <item.icon size={20} />
+                                    {item.label}
+                                </Link>
+                            );
+                        })}
+                    </nav>
 
-                        return (
-                            <Link
-                                key={item.path}
-                                to={item.path}
-                                onClick={() => setIsSidebarOpen(false)}
-                                className={`
-                                    flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors
-                                    ${isActive
-                                        ? 'bg-rose-50 text-[#FF385C]'
-                                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}
-                                `}
-                            >
-                                <item.icon size={20} />
-                                {item.label}
-                            </Link>
-                        );
-                    })}
-                </nav>
+                    {managementNavItems.length > 0 && (
+                        <div className="mt-2 pt-2 border-t border-gray-100 px-2">
+                            <h3 className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                                Management
+                            </h3>
+                            <nav className="space-y-1">
+                                {managementNavItems.map((item) => {
+                                    const isActive = location.pathname.startsWith(item.path);
+                                    return (
+                                        <Link
+                                            key={item.path}
+                                            to={item.path}
+                                            onClick={() => setIsSidebarOpen(false)}
+                                            className={`
+                                                flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors
+                                                ${isActive
+                                                    ? 'bg-rose-50 text-[#FF385C]'
+                                                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}
+                                            `}
+                                        >
+                                            <item.icon size={20} />
+                                            {item.label}
+                                        </Link>
+                                    );
+                                })}
+                            </nav>
+                        </div>
+                    )}
 
-                <div className="absolute bottom-4 left-0 w-full px-4">
+                    <div className="mt-auto p-2 border-t border-gray-100">
+                        <Link
+                            to={settingsItem.path}
+                            onClick={() => setIsSidebarOpen(false)}
+                            className={`
+                                flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors
+                                ${location.pathname.startsWith(settingsItem.path)
+                                    ? 'bg-rose-50 text-[#FF385C]'
+                                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}
+                            `}
+                        >
+                            <settingsItem.icon size={20} />
+                            {settingsItem.label}
+                        </Link>
+
+                        <button className="flex items-center gap-3 px-4 py-3 w-full text-left rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-red-500 transition-colors mt-1">
+                            <LogOut size={20} />
+                            Switch to Traveling
+                        </button>
+                    </div>
+                </div>
+
+                <div className="absolute bottom-4 left-0 w-full px-4 hidden"> {/* Hidden because we moved logout/settings logic? Keeping original structure logic */}
                     <button className="flex items-center gap-3 px-4 py-3 w-full text-left rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-red-500 transition-colors">
                         <LogOut size={20} />
                         Switch to Traveling

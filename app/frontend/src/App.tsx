@@ -34,6 +34,8 @@ const HostingActivities = lazy(() => import('./pages/hosting/HostingActivities')
 const CreateActivity = lazy(() => import('./pages/hosting/CreateActivity'));
 const EditActivity = lazy(() => import('./pages/hosting/EditActivity'));
 const HostingBookings = lazy(() => import('./pages/hosting/HostingBookings'));
+const HostingTeam = lazy(() => import('./pages/hosting/HostingTeam'));
+const HostingProfiles = lazy(() => import('./pages/hosting/HostingProfiles'));
 
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -59,6 +61,8 @@ function App() {
         }>
           <Route index element={<AdminDashboard />} />
           <Route path="users" element={<AdminUsers />} />
+          <Route path="team" element={<HostingTeam />} />
+          <Route path="profiles" element={<HostingProfiles />} />
           <Route path="activities" element={<AdminActivities />} />
           <Route path="activities/create" element={<CreateActivity />} />
           <Route path="activities/edit/:id" element={<EditActivity />} />
@@ -77,7 +81,7 @@ function App() {
 
         {/* Hosting Routes */}
         <Route path="/hosting" element={
-          <ProtectedRoute allowedRoles={['vendor']}>
+          <ProtectedRoute allowedRoles={['vendor', 'employee']}>
             <HostingLayout />
           </ProtectedRoute>
         }>
@@ -86,6 +90,16 @@ function App() {
           <Route path="activities/edit/:id" element={<EditActivity />} />
           <Route path="create" element={<CreateActivity />} />
           <Route path="bookings" element={<HostingBookings />} />
+          <Route path="team" element={
+            <ProtectedRoute allowedRoles={['vendor']}>
+              <HostingTeam />
+            </ProtectedRoute>
+          } />
+          <Route path="profiles" element={
+            <ProtectedRoute allowedRoles={['vendor']}>
+              <HostingProfiles />
+            </ProtectedRoute>
+          } />
         </Route>
         <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="*" element={<NotFound />} />

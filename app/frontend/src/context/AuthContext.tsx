@@ -12,6 +12,9 @@ const VERIFY_ME = gql`
       role
       firstName
       lastName
+      permissions
+      ownerId
+      profileId
     }
   }
 `;

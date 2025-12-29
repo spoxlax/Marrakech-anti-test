@@ -27,6 +27,32 @@ This file contains all required measures to keep your application secure without
 - Ownership checks:
   - Vendors can only edit their own activities/bookings
 
+### 📜 Hierarchical Permission System
+
+The system implements a robust permission inheritance model:
+
+1.  **Vertical Inheritance (Admin/Vendor → Employee)**:
+    - Employees inherit permissions from their assigned **Profile**.
+    - **Intersection Rule**: An employee's effective permissions are the *intersection* of their Profile's permissions and their Parent's (Employer's) effective permissions.
+    - If the Employer loses a permission, the Employee automatically loses it too.
+
+2.  **Horizontal Scope (Ownership)**:
+    - Permissions grant capability (e.g., `activities:view`), but **Ownership** limits scope.
+    - An employee with `activities:view` can only view activities owned by their Employer (`vendorId` match).
+
+3.  **Privilege Escalation Prevention**:
+    - A user cannot assign a permission they do not possess.
+    - **Checks**: `createProfile`, `updateProfile`, `createEmployee`, and `updateEmployee` resolvers enforce `canAssignPermissions`.
+    - **Role Restrictions**: Only Admins and Vendors can create Profiles/Employees. Employees cannot elevate their own privileges.
+
+4.  **Audit Logging**:
+    - Critical security actions are logged to the `AuditLog` collection.
+    - **Events Logged**:
+        - `CREATE_USER` / `UPDATE_USER`
+        - `CREATE_PROFILE` / `UPDATE_PROFILE` / `DELETE_PROFILE`
+        - `CREATE_EMPLOYEE` / `UPDATE_EMPLOYEE`
+        - Privilege escalation attempts (logged as failures).
+
 ---
 
 ## 🛡 Server Security

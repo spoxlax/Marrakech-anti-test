@@ -1,18 +1,35 @@
 const Activity = require('./models/Activity');
 const Category = require('./models/Category');
 
+const checkPermission = (user, resource, action) => {
+  if (!user) throw new Error('Unauthorized');
+  if (user.role === 'admin') return true;
+
+  const permissions = user.permissions || [];
+  if (permissions.includes('*')) return true; // Vendor owner or super admin
+
+  // Check specific permission
+  if (permissions.includes(`${resource}:${action}`)) return true;
+
+  return false;
+};
+
 const resolvers = {
   Query: {
     activities: async () => {
+      // Public access: No permission check needed
       return await Activity.find();
     },
     activity: async (_, { id }) => {
+      // Public access: No permission check needed
       return await Activity.findById(id);
     },
     categories: async () => {
+      // Public access: No permission check needed
       return await Category.find({ isActive: true }).sort({ order: 1, name: 1 });
     },
     searchActivities: async (_, { query, category, minPrice, maxPrice, city, minRating }) => {
+      // Public access: No permission check needed
       const filter = {};
 
       // Text Search
@@ -42,10 +59,6 @@ const resolvers = {
         filter.averageRating = { $gte: minRating };
       }
 
-      // If no query but filters exist, text search won't work alone like this easily if mixed with other filters in some mongo versions without specific index setups, 
-      // but standard find works. However, $text requires $search. 
-      // If query IS provided, use $text. If NOT, use regex or just matches.
-
       if (!query && Object.keys(filter).length > 0) {
         // If purely filtering without text search
         return await Activity.find(filter);
@@ -62,13 +75,19 @@ const resolvers = {
     },
     myActivities: async (_, __, { user }) => {
       if (!user) throw new Error('Unauthorized');
-      return await Activity.find({ vendorId: user.userId });
+
+      if (!checkPermission(user, 'activities', 'view')) {
+        throw new Error('Forbidden');
+      }
+
+      const ownerId = user.ownerId || user.userId;
+      return await Activity.find({ vendorId: ownerId });
     },
   },
   Mutation: {
     createCategory: async (_, { input }, { user }) => {
-      if (!user || (user.role !== 'vendor' && user.role !== 'admin')) {
-        throw new Error('Unauthorized');
+      if (!checkPermission(user, 'activities', 'create')) {
+        throw new Error('Forbidden');
       }
       const category = new Category({
         name: input.name,
@@ -82,8 +101,8 @@ const resolvers = {
       return category;
     },
     updateCategory: async (_, { id, input }, { user }) => {
-      if (!user || (user.role !== 'vendor' && user.role !== 'admin')) {
-        throw new Error('Unauthorized');
+      if (!checkPermission(user, 'activities', 'edit')) {
+        throw new Error('Forbidden');
       }
       const category = await Category.findById(id);
       if (!category) throw new Error('Category not found');
@@ -106,8 +125,8 @@ const resolvers = {
       return category;
     },
     deleteCategory: async (_, { id }, { user }) => {
-      if (!user || (user.role !== 'vendor' && user.role !== 'admin')) {
-        throw new Error('Unauthorized');
+      if (!checkPermission(user, 'activities', 'delete')) {
+        throw new Error('Forbidden');
       }
       const category = await Category.findById(id);
       if (!category) return false;
@@ -123,8 +142,8 @@ const resolvers = {
       return true;
     },
     createActivity: async (_, { input }, { user }) => {
-      if (!user || (user.role !== 'vendor' && user.role !== 'admin')) {
-        throw new Error('Unauthorized');
+      if (!checkPermission(user, 'activities', 'create')) {
+        throw new Error('Forbidden');
       }
       const hasCategories = await Category.exists({});
       if (hasCategories) {
@@ -133,7 +152,7 @@ const resolvers = {
       }
       const activity = new Activity({
         ...input,
-        vendorId: user.userId,
+        vendorId: user.ownerId || user.userId,
         status: user.role === 'admin' ? 'APPROVED' : 'PENDING'
       });
       await activity.save();
@@ -145,9 +164,12 @@ const resolvers = {
       const activity = await Activity.findById(id);
       if (!activity) throw new Error('Activity not found');
 
+      const ownerId = user.ownerId || user.userId;
+
       // Admin or Owner check
-      if (user.role !== 'admin' && activity.vendorId.toString() !== user.userId) {
-        throw new Error('Forbidden');
+      if (user.role !== 'admin') {
+        if (activity.vendorId.toString() !== ownerId) throw new Error('Forbidden');
+        if (!checkPermission(user, 'activities', 'edit')) throw new Error('Forbidden');
       }
 
       const hasCategories = await Category.exists({});
@@ -173,9 +195,12 @@ const resolvers = {
       const activity = await Activity.findById(id);
       if (!activity) return false;
 
+      const ownerId = user.ownerId || user.userId;
+
       // Admin or Owner check
-      if (user.role !== 'admin' && activity.vendorId.toString() !== user.userId) {
-        throw new Error('Forbidden');
+      if (user.role !== 'admin') {
+        if (activity.vendorId.toString() !== ownerId) throw new Error('Forbidden');
+        if (!checkPermission(user, 'activities', 'delete')) throw new Error('Forbidden');
       }
 
       // Delete images from Upload Service
@@ -192,14 +217,14 @@ const resolvers = {
             // Global fetch is available in Node 18+
             await fetch(`${uploadServiceUrl}/file`, {
               method: 'DELETE',
-              headers: { 
+              headers: {
                 'Content-Type': 'application/json',
                 'x-api-key': process.env.UPLOADS_API_KEY
               },
               body: JSON.stringify({ filename })
             });
-          } catch (err) {
-            console.error(`Failed to delete image ${imageUrl}:`, err);
+          } catch (e) {
+            console.error('Failed to delete image:', imageUrl, e);
           }
         }));
       }
@@ -212,11 +237,10 @@ const resolvers = {
     __resolveReference(activityReference) {
       return Activity.findById(activityReference.id);
     },
-  },
-  Category: {
-    __resolveReference(categoryReference) {
-      return Category.findById(categoryReference.id);
-    },
+    vendorId: (activity) => activity.vendorId ? activity.vendorId.toString() : "000000000000000000000000",
+    title: (activity) => activity.title || "Untitled Activity",
+    priceAdult: (activity) => activity.priceAdult || 0,
+    status: (activity) => activity.status || "PENDING",
   },
 };
 

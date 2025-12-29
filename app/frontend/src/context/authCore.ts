@@ -6,6 +6,9 @@ export interface User {
     role: string;
     firstName?: string;
     lastName?: string;
+    permissions?: string[];
+    ownerId?: string;
+    profileId?: string;
 }
 
 export interface AuthContextType {
