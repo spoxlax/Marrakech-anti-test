@@ -154,6 +154,7 @@ export const CREATE_BOOKING = gql`
       id
       status
       paymentMethod
+      guestToken
     }
   }
 `;

@@ -22,6 +22,7 @@ const typeDefs = gql`
     status: String!
     paymentMethod: String
     confirmationCode: String
+    guestToken: String
     activity: Activity
     vendor: User
     professionalPhotos: [String]
@@ -33,7 +34,7 @@ const typeDefs = gql`
     addBookingPhotos(bookingId: ID!, photoUrls: [String!]!): Booking
     updateBookingDetails(id: ID!, input: UpdateBookingInput!): Booking
     deleteBooking(id: ID!): Boolean
-    associateGuestBookings: Int # Returns number of bookings associated
+    associateGuestBookings(guestToken: String): Int # Returns number of bookings associated
   }
 
   extend type Activity @key(fields: "id") {

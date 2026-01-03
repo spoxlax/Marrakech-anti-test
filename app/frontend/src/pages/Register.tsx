@@ -17,8 +17,8 @@ const SIGNUP_MUTATION = gql`
 `;
 
 const ASSOCIATE_BOOKINGS = gql`
-  mutation AssociateGuestBookings {
-    associateGuestBookings
+  mutation AssociateGuestBookings($guestToken: String) {
+    associateGuestBookings(guestToken: $guestToken)
   }
 `;
 
@@ -32,8 +32,11 @@ const Register: React.FC = () => {
         password: '',
     });
     const [signupMutation, { loading, error }] = useMutation(SIGNUP_MUTATION);
-    // const [associateBookings] = useMutation(ASSOCIATE_BOOKINGS); // Disabled until backend restart
+    const [associateBookings] = useMutation(ASSOCIATE_BOOKINGS);
     const navigate = useNavigate();
+
+    // Validation state
+    const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -45,12 +48,39 @@ const Register: React.FC = () => {
         }));
     }, [location.search]);
 
+    const validateForm = () => {
+        const errors: { [key: string]: string } = {};
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailRegex.test(formData.email)) {
+            errors.email = "Please enter a valid email address";
+        }
+
+        if (formData.password.length < 8) {
+            errors.password = "Password must be at least 8 characters long";
+        }
+
+        // Basic XSS/Injection prevention (trimming)
+        if (formData.firstName.trim().length < 2) errors.firstName = "First name is too short";
+        if (formData.lastName.trim().length < 2) errors.lastName = "Last name is too short";
+
+        setValidationErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+        // Clear error when user types
+        if (validationErrors[e.target.name]) {
+            setValidationErrors(prev => ({ ...prev, [e.target.name]: '' }));
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!validateForm()) return;
+
         try {
             const { data } = await signupMutation({ variables: { input: formData } });
             if (data?.signup?.token) {
@@ -60,13 +90,14 @@ const Register: React.FC = () => {
                 // Attempt to associate any guest bookings
                 const guestToken = localStorage.getItem('guestToken');
                 try {
-                    // await associateBookings({ variables: { guestToken } }); // Disabled until backend restart
+                    await associateBookings({ variables: { guestToken } });
                     if (guestToken) {
                         localStorage.removeItem('guestToken');
                     }
                     console.log('[Analytics] Conversion: Guest to Registered User');
                 } catch (assocErr) {
-                    console.warn("Failed to associate bookings:", assocErr);
+                    // Fail silently for association but log warning
+                    console.warn("Failed to associate bookings (Backend might be outdated):", assocErr);
                 }
 
                 navigate('/');
@@ -100,7 +131,7 @@ const Register: React.FC = () => {
                                     name="firstName"
                                     type="text"
                                     required
-                                    className="peer w-full pt-6 pb-2 px-3 outline-none text-gray-900 placeholder-transparent"
+                                    className={`peer w-full pt-6 pb-2 px-3 outline-none text-gray-900 placeholder-transparent ${validationErrors.firstName ? 'bg-red-50' : ''}`}
                                     placeholder="First Name"
                                     value={formData.firstName}
                                     onChange={handleChange}
@@ -108,6 +139,7 @@ const Register: React.FC = () => {
                                 <label htmlFor="firstName" className="absolute left-3 top-2 text-xs text-gray-500 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-focus:top-2 peer-focus:text-xs">
                                     First Name
                                 </label>
+                                {validationErrors.firstName && <span className="text-xs text-red-500 px-3">{validationErrors.firstName}</span>}
                             </div>
                             <div className="relative border-b border-gray-400">
                                 <input
@@ -115,7 +147,7 @@ const Register: React.FC = () => {
                                     name="lastName"
                                     type="text"
                                     required
-                                    className="peer w-full pt-6 pb-2 px-3 outline-none text-gray-900 placeholder-transparent"
+                                    className={`peer w-full pt-6 pb-2 px-3 outline-none text-gray-900 placeholder-transparent ${validationErrors.lastName ? 'bg-red-50' : ''}`}
                                     placeholder="Last Name"
                                     value={formData.lastName}
                                     onChange={handleChange}
@@ -123,6 +155,7 @@ const Register: React.FC = () => {
                                 <label htmlFor="lastName" className="absolute left-3 top-2 text-xs text-gray-500 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-focus:top-2 peer-focus:text-xs">
                                     Last Name
                                 </label>
+                                {validationErrors.lastName && <span className="text-xs text-red-500 px-3">{validationErrors.lastName}</span>}
                             </div>
                             <div className="relative border-b border-gray-400">
                                 <input
@@ -130,7 +163,7 @@ const Register: React.FC = () => {
                                     name="email"
                                     type="email"
                                     required
-                                    className="peer w-full pt-6 pb-2 px-3 outline-none text-gray-900 placeholder-transparent"
+                                    className={`peer w-full pt-6 pb-2 px-3 outline-none text-gray-900 placeholder-transparent ${validationErrors.email ? 'bg-red-50' : ''}`}
                                     placeholder="Email"
                                     value={formData.email}
                                     onChange={handleChange}
@@ -138,6 +171,7 @@ const Register: React.FC = () => {
                                 <label htmlFor="email" className="absolute left-3 top-2 text-xs text-gray-500 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-focus:top-2 peer-focus:text-xs">
                                     Email
                                 </label>
+                                {validationErrors.email && <span className="text-xs text-red-500 px-3">{validationErrors.email}</span>}
                             </div>
                             <div className="relative">
                                 <input
@@ -145,7 +179,7 @@ const Register: React.FC = () => {
                                     name="password"
                                     type="password"
                                     required
-                                    className="peer w-full pt-6 pb-2 px-3 outline-none text-gray-900 placeholder-transparent"
+                                    className={`peer w-full pt-6 pb-2 px-3 outline-none text-gray-900 placeholder-transparent ${validationErrors.password ? 'bg-red-50' : ''}`}
                                     placeholder="Password"
                                     value={formData.password}
                                     onChange={handleChange}
@@ -153,6 +187,7 @@ const Register: React.FC = () => {
                                 <label htmlFor="password" className="absolute left-3 top-2 text-xs text-gray-500 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-focus:top-2 peer-focus:text-xs">
                                     Password
                                 </label>
+                                {validationErrors.password && <span className="text-xs text-red-500 px-3">{validationErrors.password}</span>}
                             </div>
                         </div>
 

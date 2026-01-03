@@ -204,17 +204,29 @@ const resolvers = {
       await Booking.findByIdAndDelete(id);
       return true;
     },
-    associateGuestBookings: async (_, __, { user }) => {
+    associateGuestBookings: async (_, { guestToken }, { user }) => {
       if (!user) throw new Error('Unauthorized');
 
-      // Find bookings with matching email and no customerId
+      const query = { customerId: null };
+      const orConditions = [];
+
+      if (guestToken) {
+        orConditions.push({ guestToken });
+      }
+
+      if (user.email) {
+        orConditions.push({ 'customerInfo.email': user.email });
+      }
+
+      if (orConditions.length === 0) return 0;
+
+      query.$or = orConditions;
+
+      // Find bookings with matching email OR guestToken and no customerId
       const result = await Booking.updateMany(
+        query,
         {
-          'customerInfo.email': user.email,
-          customerId: null
-        },
-        {
-          $set: { customerId: user.userId }
+          $set: { customerId: user.userId, guestToken: null }
         }
       );
 

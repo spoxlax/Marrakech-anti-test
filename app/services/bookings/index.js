@@ -43,3 +43,4 @@ async function startServer() {
 }
 
 startServer();
+// Forced restart for schema update (v2)

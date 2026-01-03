@@ -84,14 +84,19 @@ const Checkout: React.FC = () => {
                             lastName: formState.lastName,
                             email: formState.email,
                             phone: formState.phone
-                        }
-                        // Guest token temporarily disabled to prevent schema mismatch 400 error
-                        // guestToken: storedGuestToken || undefined 
+                        },
+                        // Pass guest token if exists to link session
+                        guestToken: storedGuestToken || undefined
                     }
                 }
             });
 
             if (result?.createBooking?.id) {
+                // Store guest token if returned (for new guest sessions)
+                if (result.createBooking.guestToken) {
+                    localStorage.setItem('guestToken', result.createBooking.guestToken);
+                }
+
                 // Navigate to confirmation page
                 navigate(`/booking/success/${result.createBooking.id}`);
             }

@@ -98,3 +98,4 @@ async function startServer() {
 startServer().catch(err => {
   console.error(err);
 });
+// Forced restart for schema update
