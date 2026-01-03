@@ -153,7 +153,7 @@ const resolvers = {
       const activity = new Activity({
         ...input,
         vendorId: user.ownerId || user.userId,
-        status: user.role === 'admin' ? 'APPROVED' : 'PENDING'
+        status: 'APPROVED' // Auto-approve but allow admin to reject later
       });
       await activity.save();
       return activity;

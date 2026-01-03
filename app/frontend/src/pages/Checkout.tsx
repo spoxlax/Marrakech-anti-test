@@ -64,6 +64,9 @@ const Checkout: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            // Check for existing guest session
+            const storedGuestToken = localStorage.getItem('guestToken');
+
             const { data: result } = await createBooking({
                 variables: {
                     input: {
@@ -82,6 +85,8 @@ const Checkout: React.FC = () => {
                             email: formState.email,
                             phone: formState.phone
                         }
+                        // Guest token temporarily disabled to prevent schema mismatch 400 error
+                        // guestToken: storedGuestToken || undefined 
                     }
                 }
             });

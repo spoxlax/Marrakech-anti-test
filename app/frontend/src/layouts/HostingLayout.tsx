@@ -1,23 +1,50 @@
-import React, { useState } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, List, CalendarCheck, Settings, LogOut, Menu, X, PlusCircle, Users, Shield } from 'lucide-react';
 import { useAuth } from '../context/authCore';
 
 const HostingLayout: React.FC = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
+
+    const hasPermission = (permission: string) => {
+        if (!user) return false;
+        if (user.role === 'admin') return true;
+        if (user.permissions?.includes('*')) return true;
+        return user.permissions?.includes(permission);
+    };
+
+    // Diagnostic logging for permission troubleshooting
+    useEffect(() => {
+        if (user) {
+            console.group('Sidebar Permission Diagnostics');
+            console.log('User Identity:', { id: user.userId, role: user.role, email: user.email });
+            console.log('Raw Permissions:', user.permissions);
+
+            const checks = [
+                { label: 'Activities View', perm: 'activities:view', result: hasPermission('activities:view') },
+                { label: 'Bookings View', perm: 'bookings:view', result: hasPermission('bookings:view') },
+                { label: 'Employees View', perm: 'employees:view', result: hasPermission('employees:view') },
+                { label: 'Settings View', perm: 'settings:view', result: hasPermission('settings:view') },
+            ];
+            console.table(checks);
+            console.groupEnd();
+        }
+    }, [user]);
 
     const mainNavItems = [
-        { label: 'Dashboard', path: '/hosting', icon: LayoutDashboard },
-        { label: 'My Listings', path: '/hosting/listings', icon: List },
-        { label: 'Bookings', path: '/hosting/bookings', icon: CalendarCheck },
+        { label: 'Dashboard', path: '/hosting', icon: LayoutDashboard, permission: 'activities:view' },
+        { label: 'My Listings', path: '/hosting/listings', icon: List, permission: 'activities:view' },
+        { label: 'Bookings', path: '/hosting/bookings', icon: CalendarCheck, permission: 'bookings:view' },
     ];
 
-    const managementNavItems = user?.role === 'vendor' ? [
-        { label: 'Team', path: '/hosting/team', icon: Users },
-        { label: 'Profiles', path: '/hosting/profiles', icon: Shield },
-    ] : [];
+    // Unified management items - rely on permissions rather than just role
+    const managementNavItems = [
+        { label: 'Team', path: '/hosting/team', icon: Users, permission: 'employees:view' },
+        { label: 'Profiles', path: '/hosting/profiles', icon: Shield, permission: 'settings:view' },
+    ];
 
     const settingsItem = { label: 'Settings', path: '/hosting/settings', icon: Settings };
 
@@ -46,15 +73,17 @@ const HostingLayout: React.FC = () => {
                 </div>
 
                 <div className="p-4">
-                    <Link to="/hosting/create" className="flex items-center justify-center gap-2 w-full bg-[#FF385C] text-white py-2.5 rounded-lg font-medium text-sm hover:bg-[#d90b3e] transition-colors">
-                        <PlusCircle size={18} />
-                        Create Activity
-                    </Link>
+                    {hasPermission('activities:create') && (
+                        <Link to="/hosting/create" className="flex items-center justify-center gap-2 w-full bg-[#FF385C] text-white py-2.5 rounded-lg font-medium text-sm hover:bg-[#d90b3e] transition-colors">
+                            <PlusCircle size={18} />
+                            Create Activity
+                        </Link>
+                    )}
                 </div>
 
                 <div className="flex flex-col h-[calc(100vh-8rem)] overflow-y-auto">
                     <nav className="p-2 space-y-1">
-                        {mainNavItems.map((item) => {
+                        {mainNavItems.filter(item => hasPermission(item.permission)).map((item) => {
                             const isActive = location.pathname === item.path || (item.path !== '/hosting' && location.pathname.startsWith(item.path));
                             return (
                                 <Link
@@ -75,13 +104,13 @@ const HostingLayout: React.FC = () => {
                         })}
                     </nav>
 
-                    {managementNavItems.length > 0 && (
+                    {managementNavItems.some(item => hasPermission(item.permission)) && (
                         <div className="mt-2 pt-2 border-t border-gray-100 px-2">
                             <h3 className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
                                 Management
                             </h3>
                             <nav className="space-y-1">
-                                {managementNavItems.map((item) => {
+                                {managementNavItems.filter(item => hasPermission(item.permission)).map((item) => {
                                     const isActive = location.pathname.startsWith(item.path);
                                     return (
                                         <Link
@@ -119,7 +148,14 @@ const HostingLayout: React.FC = () => {
                             {settingsItem.label}
                         </Link>
 
-                        <button className="flex items-center gap-3 px-4 py-3 w-full text-left rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-red-500 transition-colors mt-1">
+                        <button
+                            onClick={() => {
+                                setIsSidebarOpen(false);
+                                navigate('/');
+                                // Switch to traveling usually just redirects to home or customer view
+                            }}
+                            className="flex items-center gap-3 px-4 py-3 w-full text-left rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-red-500 transition-colors mt-1"
+                        >
                             <LogOut size={20} />
                             Switch to Traveling
                         </button>

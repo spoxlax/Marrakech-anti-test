@@ -51,6 +51,10 @@ const bookingSchema = new mongoose.Schema({
     required: true,
     index: true,
   },
+  guestToken: {
+    type: String,
+    index: true,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

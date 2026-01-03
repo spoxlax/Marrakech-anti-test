@@ -79,8 +79,27 @@ const logAudit = async (action, actor, targetId, targetResource, details, status
 const resolvers = {
   Query: {
     me: async (_, __, { user }) => {
-      if (!user) throw new Error('Not authenticated');
-      return await User.findById(user.userId);
+      if (!user) return null;
+      const dbUser = await User.findById(user.userId);
+      if (!dbUser) return null;
+
+      // Attach effective permissions to the returned user object
+      // The context 'user' has permissions from token, but refreshing from DB is safer if permissions changed
+      const permissions = await getEffectivePermissions(dbUser);
+
+      // Mongoose document is immutable-ish, so convert to object or use lean() but we are modifying return
+      const userObj = dbUser.toObject();
+      userObj.permissions = permissions;
+      userObj.id = dbUser._id.toString(); // Ensure ID is string
+
+      // Also ensure ownerId is set correctly for frontend use
+      if (['admin', 'vendor'].includes(dbUser.role)) {
+        userObj.ownerId = dbUser.id;
+      } else if (dbUser.role === 'employee') {
+        userObj.ownerId = dbUser.parentId;
+      }
+
+      return userObj;
     },
     users: async (_, __, { user }) => {
       if (!user || user.role !== 'admin') {
@@ -279,7 +298,6 @@ const resolvers = {
 
     // --- Profile Management ---
     createProfile: async (_, { input }, { user }) => {
-      console.log('createProfile User Context:', user);
       if (!user || !['admin', 'vendor'].includes(user.role)) {
         throw new Error('Forbidden');
       }
@@ -455,5 +473,9 @@ const resolvers = {
     }
   },
 };
+
+// Export helpers for testing
+resolvers.getEffectivePermissions = getEffectivePermissions;
+resolvers.canAssignPermissions = canAssignPermissions;
 
 module.exports = resolvers;

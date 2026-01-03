@@ -1,9 +1,10 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, gql } from '@apollo/client';
-import { CheckCircle, Calendar, Users, MapPin } from 'lucide-react';
+import { CheckCircle, Calendar, Users, MapPin, UserPlus } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { useAuth } from '../context/authCore';
 
 const GET_BOOKING = gql`
   query GetBooking($id: ID!) {
@@ -14,6 +15,11 @@ const GET_BOOKING = gql`
       totalPrice
       paymentMethod
       confirmationCode
+      customerInfo {
+        firstName
+        lastName
+        email
+      }
       persons {
         adults
         children
@@ -31,6 +37,7 @@ const GET_BOOKING = gql`
 const BookingConfirmation: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
 
     const { data, loading, error } = useQuery(GET_BOOKING, {
         variables: { id },
@@ -55,6 +62,16 @@ const BookingConfirmation: React.FC = () => {
 
     const { booking } = data;
     const activity = booking.activity || {}; // Fallback if federation fails (though it shouldn't)
+
+    const handleCreateAccount = () => {
+        const params = new URLSearchParams();
+        if (booking.customerInfo) {
+            if (booking.customerInfo.firstName) params.append('firstName', booking.customerInfo.firstName);
+            if (booking.customerInfo.lastName) params.append('lastName', booking.customerInfo.lastName);
+            if (booking.customerInfo.email) params.append('email', booking.customerInfo.email);
+        }
+        navigate(`/register?${params.toString()}`);
+    };
 
     return (
         <div className="min-h-screen bg-white font-sans text-[#222222]">
@@ -84,6 +101,25 @@ const BookingConfirmation: React.FC = () => {
                                 <div className="text-2xl font-bold">${booking.totalPrice?.toFixed(2)}</div>
                             </div>
                         </div>
+
+                        {/* Guest Account Prompt */}
+                        {!isAuthenticated && (
+                            <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-8 flex flex-col sm:flex-row items-center gap-4">
+                                <div className="bg-blue-100 p-3 rounded-full text-blue-600">
+                                    <UserPlus size={24} />
+                                </div>
+                                <div className="flex-1 text-center sm:text-left">
+                                    <h3 className="font-semibold text-blue-900">Create an account to manage your booking</h3>
+                                    <p className="text-sm text-blue-700 mt-1">Access your tickets, modify dates, and view trip details anytime.</p>
+                                </div>
+                                <button
+                                    onClick={handleCreateAccount}
+                                    className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition-colors whitespace-nowrap w-full sm:w-auto"
+                                >
+                                    Create Account
+                                </button>
+                            </div>
+                        )}
 
                         {/* Trip Details */}
                         <h2 className="text-xl font-semibold mb-6">Your Trip Details</h2>
@@ -132,12 +168,14 @@ const BookingConfirmation: React.FC = () => {
 
                         {/* Actions */}
                         <div className="mt-10 pt-8 border-t border-gray-100 flex flex-col sm:flex-row gap-4 justify-center">
-                            <button
-                                onClick={() => navigate('/hosting/bookings')}
-                                className="bg-black text-white px-8 py-3 rounded-xl font-bold hover:opacity-90 transition-opacity"
-                            >
-                                View My Bookings
-                            </button>
+                            {isAuthenticated && (
+                                <button
+                                    onClick={() => navigate('/my-bookings')}
+                                    className="bg-black text-white px-8 py-3 rounded-xl font-bold hover:opacity-90 transition-opacity"
+                                >
+                                    View My Bookings
+                                </button>
+                            )}
                             <button
                                 onClick={() => navigate('/')}
                                 className="border border-black text-black px-8 py-3 rounded-xl font-bold hover:bg-gray-50 transition-colors"

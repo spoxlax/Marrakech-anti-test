@@ -33,6 +33,7 @@ const typeDefs = gql`
     addBookingPhotos(bookingId: ID!, photoUrls: [String!]!): Booking
     updateBookingDetails(id: ID!, input: UpdateBookingInput!): Booking
     deleteBooking(id: ID!): Boolean
+    associateGuestBookings: Int # Returns number of bookings associated
   }
 
   extend type Activity @key(fields: "id") {
@@ -63,6 +64,7 @@ const typeDefs = gql`
     persons: PersonsInput!
     totalPrice: Float!
     paymentMethod: String
+    guestToken: String
   }
 
   input UpdateBookingInput {

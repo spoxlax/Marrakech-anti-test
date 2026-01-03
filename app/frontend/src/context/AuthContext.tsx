@@ -61,7 +61,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         email: data.me.email,
                         role: data.me.role,
                         firstName: data.me.firstName,
-                        lastName: data.me.lastName
+                        lastName: data.me.lastName,
+                        permissions: data.me.permissions || decoded.permissions || [],
+                        ownerId: data.me.ownerId || decoded.ownerId,
+                        profileId: data.me.profileId || decoded.profileId
                     });
                     setToken(storedToken);
                 } else {

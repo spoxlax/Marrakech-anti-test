@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMutation, gql } from '@apollo/client';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { X } from 'lucide-react';
+import { useAuth } from '../context/authCore';
 
 const SIGNUP_MUTATION = gql`
   mutation Signup($input: SignupInput!) {
@@ -15,7 +16,15 @@ const SIGNUP_MUTATION = gql`
   }
 `;
 
+const ASSOCIATE_BOOKINGS = gql`
+  mutation AssociateGuestBookings {
+    associateGuestBookings
+  }
+`;
+
 const Register: React.FC = () => {
+    const location = useLocation();
+    const { login } = useAuth();
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -23,7 +32,18 @@ const Register: React.FC = () => {
         password: '',
     });
     const [signupMutation, { loading, error }] = useMutation(SIGNUP_MUTATION);
+    // const [associateBookings] = useMutation(ASSOCIATE_BOOKINGS); // Disabled until backend restart
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        setFormData(prev => ({
+            ...prev,
+            firstName: params.get('firstName') || '',
+            lastName: params.get('lastName') || '',
+            email: params.get('email') || ''
+        }));
+    }, [location.search]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -34,7 +54,22 @@ const Register: React.FC = () => {
         try {
             const { data } = await signupMutation({ variables: { input: formData } });
             if (data?.signup?.token) {
-                navigate('/login');
+                // Login the user immediately
+                login(data.signup.token);
+
+                // Attempt to associate any guest bookings
+                const guestToken = localStorage.getItem('guestToken');
+                try {
+                    // await associateBookings({ variables: { guestToken } }); // Disabled until backend restart
+                    if (guestToken) {
+                        localStorage.removeItem('guestToken');
+                    }
+                    console.log('[Analytics] Conversion: Guest to Registered User');
+                } catch (assocErr) {
+                    console.warn("Failed to associate bookings:", assocErr);
+                }
+
+                navigate('/');
             }
         } catch (err) {
             console.error(err);

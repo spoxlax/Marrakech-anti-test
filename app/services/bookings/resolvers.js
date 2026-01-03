@@ -107,10 +107,17 @@ const resolvers = {
   Mutation: {
     createBooking: async (_, { input }, { user }) => {
       const confirmationCode = await generateConfirmationCode();
+
+      let guestToken = null;
+      if (!user) {
+        guestToken = input.guestToken || crypto.randomBytes(32).toString('hex');
+      }
+
       const booking = new Booking({
         ...input,
         customerId: user ? user.userId : null,
         confirmationCode,
+        guestToken
       });
       await booking.save();
       return booking;
@@ -197,6 +204,22 @@ const resolvers = {
       await Booking.findByIdAndDelete(id);
       return true;
     },
+    associateGuestBookings: async (_, __, { user }) => {
+      if (!user) throw new Error('Unauthorized');
+
+      // Find bookings with matching email and no customerId
+      const result = await Booking.updateMany(
+        {
+          'customerInfo.email': user.email,
+          customerId: null
+        },
+        {
+          $set: { customerId: user.userId }
+        }
+      );
+
+      return result.modifiedCount;
+    }
   },
   Booking: {
     __resolveReference(bookingReference) {

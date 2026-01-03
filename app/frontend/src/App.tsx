@@ -71,7 +71,7 @@ function App() {
 
         {/* Customer Routes */}
         <Route path="/my-bookings" element={
-          <ProtectedRoute allowedRoles={['customer']}>
+          <ProtectedRoute allowedRoles={['customer', 'admin', 'vendor', 'employee']}>
             <CustomerLayout />
           </ProtectedRoute>
         }>
@@ -81,7 +81,7 @@ function App() {
 
         {/* Hosting Routes */}
         <Route path="/hosting" element={
-          <ProtectedRoute allowedRoles={['vendor', 'employee']}>
+          <ProtectedRoute allowedRoles={['vendor', 'employee', 'admin']}>
             <HostingLayout />
           </ProtectedRoute>
         }>
@@ -91,12 +91,12 @@ function App() {
           <Route path="create" element={<CreateActivity />} />
           <Route path="bookings" element={<HostingBookings />} />
           <Route path="team" element={
-            <ProtectedRoute allowedRoles={['vendor']}>
+            <ProtectedRoute allowedRoles={['vendor', 'employee', 'admin']}>
               <HostingTeam />
             </ProtectedRoute>
           } />
           <Route path="profiles" element={
-            <ProtectedRoute allowedRoles={['vendor']}>
+            <ProtectedRoute allowedRoles={['vendor', 'employee', 'admin']}>
               <HostingProfiles />
             </ProtectedRoute>
           } />

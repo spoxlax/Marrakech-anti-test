@@ -2,8 +2,11 @@ import React, { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Users, Map, Settings, LogOut, Menu, X, CalendarCheck, Shield, UserPlus } from 'lucide-react';
 
+import { useAuth } from '../context/authCore';
+
 const AdminLayout: React.FC = () => {
     const location = useLocation();
+    const { logout } = useAuth();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const mainNavItems = [
@@ -109,7 +112,13 @@ const AdminLayout: React.FC = () => {
                             {settingsItem.label}
                         </Link>
 
-                        <button className="flex items-center gap-3 px-4 py-3 w-full text-left rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-red-500 transition-colors mt-2">
+                        <button
+                            onClick={() => {
+                                setIsSidebarOpen(false);
+                                logout();
+                            }}
+                            className="flex items-center gap-3 px-4 py-3 w-full text-left rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-red-500 transition-colors mt-2"
+                        >
                             <LogOut size={20} />
                             Sign Out
                         </button>
