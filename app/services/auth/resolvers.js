@@ -5,6 +5,14 @@ const Profile = require('./models/Profile');
 const AuditLog = require('./models/AuditLog');
 const { sendAuthEmail } = require('./utils/mailer');
 
+const JWT_SECRET = process.env.JWT_SECRET;
+console.log(JWT_SECRET)
+
+if (!JWT_SECRET) {
+  console.error("FATAL ERROR: JWT_SECRET is not defined in environment variables (resolvers.js).");
+  process.exit(1);
+}
+
 const PERMISSIONS_LIST = [
   { resource: 'activities', actions: ['view', 'create', 'edit', 'delete'] },
   { resource: 'bookings', actions: ['view', 'create', 'edit', 'delete'] },
@@ -244,7 +252,7 @@ const resolvers = {
 
       const token = jwt.sign(
         { userId: user.id, role: user.role },
-        process.env.JWT_SECRET,
+        JWT_SECRET,
         { expiresIn: '7d' }
       );
 
@@ -289,7 +297,7 @@ const resolvers = {
 
       const token = jwt.sign(
         payload,
-        process.env.JWT_SECRET,
+        JWT_SECRET,
         { expiresIn: '7d' }
       );
 

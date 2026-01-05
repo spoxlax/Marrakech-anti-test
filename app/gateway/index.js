@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const { ApolloServer } = require('apollo-server-express');
 const { ApolloGateway, IntrospectAndCompose, RemoteGraphQLDataSource } = require('@apollo/gateway');
@@ -7,11 +8,12 @@ const path = require('path');
 const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
-require('dotenv').config();
+
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Critical Security Check
-if (!process.env.JWT_SECRET) {
-  console.error("FATAL: JWT_SECRET is not defined. Exiting.");
+if (!JWT_SECRET) {
+  console.error("FATAL ERROR: JWT_SECRET is not defined in environment variables.");
   process.exit(1);
 }
 
@@ -52,7 +54,7 @@ async function startServer() {
 
   app.use(cors({
     origin: process.env.NODE_ENV === 'production'
-      ? ['https://your-production-domain.com'] // Update this with actual domain
+      ? ['http://localhost:3000/'] // Update this with actual domain
       : ['http://localhost:5173', 'http://localhost:4173', 'http://localhost:3000', 'http://127.0.0.1:3000'],
     credentials: true
   })); // Configure strict CORS in production
@@ -74,7 +76,7 @@ async function startServer() {
       if (authHeader.startsWith('Bearer ')) {
         const token = authHeader.replace('Bearer ', '');
         try {
-          user = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
+          user = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
         } catch (e) {
           user = null;
         }

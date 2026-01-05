@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const { ApolloServer } = require('apollo-server-express');
 const { buildSubgraphSchema } = require('@apollo/subgraph');
@@ -8,7 +9,6 @@ const cors = require('cors');
 const { typeDefs } = require('./schema');
 const resolvers = require('./resolvers');
 const seedAdmin = require('./seed');
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -21,16 +21,23 @@ app.use(helmet({
 app.use(cors());
 
 // Critical Security Check
-if (!process.env.JWT_SECRET) {
-  console.warn("WARNING: JWT_SECRET is not defined. Using insecure default for development only.");
-  // In production, you might want to exit: process.exit(1);
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  console.error("FATAL ERROR: JWT_SECRET is not defined in environment variables.");
+  process.exit(1);
 }
 
 mongoose
   .connect(process.env.MONGO_URI || 'mongodb://localhost:27017/tourism-auth')
   .then(async () => {
     console.log('MongoDB connected');
-    await seedAdmin();
+    // Ensure admin exists
+    try {
+      await seedAdmin();
+    } catch (e) {
+      console.error("Seeding failed", e);
+    }
   })
   .catch(err => console.error(err));
 
@@ -45,7 +52,7 @@ async function startServer() {
       if (authHeader.startsWith('Bearer ')) {
         token = authHeader.replace('Bearer ', '');
         try {
-          user = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
+          user = jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
         } catch (e) {
           user = null;
         }

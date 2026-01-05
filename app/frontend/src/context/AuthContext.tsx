@@ -34,8 +34,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
 
             // 1. Basic Client-side Expiry Check
+            let decoded: (User & { exp: number }) | null = null;
             try {
-                const decoded = jwtDecode<User & { exp: number }>(storedToken);
+                decoded = jwtDecode<User & { exp: number }>(storedToken);
                 const currentTime = Date.now() / 1000;
                 if (decoded.exp < currentTime) {
                     throw new Error("Expired");
@@ -62,9 +63,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         role: data.me.role,
                         firstName: data.me.firstName,
                         lastName: data.me.lastName,
-                        permissions: data.me.permissions || decoded.permissions || [],
-                        ownerId: data.me.ownerId || decoded.ownerId,
-                        profileId: data.me.profileId || decoded.profileId
+                        permissions: data.me.permissions || (decoded?.permissions || []),
+                        ownerId: data.me.ownerId || (decoded?.ownerId),
+                        profileId: data.me.profileId || (decoded?.profileId)
                     });
                     setToken(storedToken);
                 } else {
