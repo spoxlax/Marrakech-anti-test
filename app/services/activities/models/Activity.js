@@ -59,5 +59,6 @@ const activitySchema = new mongoose.Schema({
 });
 
 activitySchema.index({ title: 'text', description: 'text' });
+activitySchema.index({ averageRating: -1 });
 
 module.exports = mongoose.model('Activity', activitySchema);

@@ -65,4 +65,9 @@ const bookingSchema = new mongoose.Schema({
   },
 });
 
+// Indexes for search performance
+bookingSchema.index({ 'customerInfo.email': 1 });
+bookingSchema.index({ 'customerInfo.phone': 1 });
+bookingSchema.index({ 'customerInfo.firstName': 1, 'customerInfo.lastName': 1 });
+
 module.exports = mongoose.model('Booking', bookingSchema);

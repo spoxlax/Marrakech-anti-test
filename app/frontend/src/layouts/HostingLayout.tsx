@@ -18,7 +18,7 @@ const HostingLayout: React.FC = () => {
 
     // Diagnostic logging for permission troubleshooting
     useEffect(() => {
-        if (user) {
+        if (user && process.env.NODE_ENV !== 'production') {
             console.group('Sidebar Permission Diagnostics');
             console.log('User Identity:', { id: user.userId, role: user.role, email: user.email });
             console.log('Raw Permissions:', user.permissions);

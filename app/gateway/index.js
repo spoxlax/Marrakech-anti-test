@@ -50,6 +50,8 @@ async function startServer() {
   app.use(helmet({
     contentSecurityPolicy: process.env.NODE_ENV === 'production' ? undefined : false, // Allow GraphQL Playground in dev
     crossOriginEmbedderPolicy: false,
+    hidePoweredBy: true, // Hide X-Powered-By header
+    frameguard: { action: 'deny' } // Prevent clickjacking
   }));
 
   app.use(cors({

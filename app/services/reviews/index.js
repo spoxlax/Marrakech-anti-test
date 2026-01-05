@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const { ApolloServer } = require('apollo-server-express');
 const { buildSubgraphSchema } = require('@apollo/subgraph');
@@ -5,10 +6,14 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const { typeDefs } = require('./schema');
 const { resolvers } = require('./resolvers');
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5004;
+
+if (!process.env.JWT_SECRET) {
+  console.error("FATAL ERROR: JWT_SECRET is not defined in environment variables.");
+  process.exit(1);
+}
 
 mongoose
   .connect(process.env.MONGO_URI || 'mongodb://localhost:27017/tourism-reviews')
@@ -18,7 +23,7 @@ mongoose
 async function startServer() {
   const server = new ApolloServer({
     schema: buildSubgraphSchema([{ typeDefs, resolvers }]),
-    introspection: true,
+    introspection: process.env.NODE_ENV !== 'production',
     context: ({ req }) => {
       const authHeader = req.headers.authorization || '';
       let user = null;

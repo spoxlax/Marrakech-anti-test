@@ -6,7 +6,6 @@ const AuditLog = require('./models/AuditLog');
 const { sendAuthEmail } = require('./utils/mailer');
 
 const JWT_SECRET = process.env.JWT_SECRET;
-console.log(JWT_SECRET)
 
 if (!JWT_SECRET) {
   console.error("FATAL ERROR: JWT_SECRET is not defined in environment variables (resolvers.js).");

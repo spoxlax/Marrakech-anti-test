@@ -94,10 +94,14 @@ const Register: React.FC = () => {
                     if (guestToken) {
                         localStorage.removeItem('guestToken');
                     }
-                    console.log('[Analytics] Conversion: Guest to Registered User');
+                    if (process.env.NODE_ENV !== 'production') {
+                        console.log('[Analytics] Conversion: Guest to Registered User');
+                    }
                 } catch (assocErr) {
                     // Fail silently for association but log warning
-                    console.warn("Failed to associate bookings (Backend might be outdated):", assocErr);
+                    if (process.env.NODE_ENV !== 'production') {
+                        console.warn("Failed to associate bookings (Backend might be outdated):", assocErr);
+                    }
                 }
 
                 navigate('/');

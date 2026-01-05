@@ -44,7 +44,7 @@ mongoose
 async function startServer() {
   const server = new ApolloServer({
     schema: buildSubgraphSchema([{ typeDefs, resolvers }]),
-    introspection: true,
+    introspection: process.env.NODE_ENV !== 'production', // Disable introspection in production
     context: ({ req }) => {
       const authHeader = req.headers.authorization || '';
       let user = null;

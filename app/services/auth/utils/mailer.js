@@ -24,7 +24,9 @@ async function sendEmail(to, subject, text, html = '') {
       text,
       html: html || text, // Fallback to text if HTML not provided
     });
-    console.log('Message sent: %s', info.messageId);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Message sent: %s', info.messageId);
+    }
     return info;
   } catch (error) {
     console.error('Error sending email:', error);
