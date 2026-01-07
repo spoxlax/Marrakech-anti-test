@@ -1,0 +1,29 @@
+from node:18-alpine
+
+WORKDIR /app
+    
+# Copy root package files
+COPY package.json ./
+
+# Copy workspace package.json files
+# We need to preserve the directory structure for workspaces to work
+COPY app/frontend/package.json app/frontend/
+COPY app/gateway/package.json app/gateway/
+COPY app/services/activities/package.json app/services/activities/
+COPY app/services/auth/package.json app/services/auth/
+COPY app/services/bookings/package.json app/services/bookings/
+COPY app/services/payments/package.json app/services/payments/
+COPY app/services/reviews/package.json app/services/reviews/
+COPY app/services/uploads/package.json app/services/uploads/
+
+# Install dependencies
+RUN npm install --legacy-peer-deps
+
+# Copy source code
+COPY . .
+
+# Expose ports (documentation only, compose handles mapping)
+EXPOSE 5000 5001 5002 5004 5005 5006 5007
+
+# Default command (overridden in docker-compose)
+CMD ["npm", "start"]

@@ -24,11 +24,11 @@ console.log('Gateway starting...');
 const gateway = new ApolloGateway({
   supergraphSdl: new IntrospectAndCompose({
     subgraphs: [
-      { name: 'auth', url: 'http://localhost:5001/graphql' },
-      { name: 'activities', url: 'http://localhost:5002/graphql' },
-      { name: 'bookings', url: 'http://localhost:5005/graphql' },
-      { name: 'reviews', url: 'http://localhost:5004/graphql' },
-      { name: 'payments', url: 'http://localhost:5006/graphql' },
+      { name: 'auth', url: process.env.AUTH_SERVICE_URL || 'http://localhost:5001/graphql' },
+      { name: 'activities', url: process.env.ACTIVITIES_SERVICE_URL || 'http://localhost:5002/graphql' },
+      { name: 'bookings', url: process.env.BOOKINGS_SERVICE_URL || 'http://localhost:5005/graphql' },
+      { name: 'reviews', url: process.env.REVIEWS_SERVICE_URL || 'http://localhost:5004/graphql' },
+      { name: 'payments', url: process.env.PAYMENTS_SERVICE_URL || 'http://localhost:5006/graphql' },
     ],
     pollIntervalInMs: 10000,
   }),
@@ -56,7 +56,7 @@ async function startServer() {
 
   app.use(cors({
     origin: process.env.NODE_ENV === 'production'
-      ? ['http://localhost:3000/'] // Update this with actual domain
+      ? ['http://localhost:3000', 'http://localhost'] // Update this with actual domain
       : ['http://localhost:5173', 'http://localhost:4173', 'http://localhost:3000', 'http://127.0.0.1:3000'],
     credentials: true
   })); // Configure strict CORS in production
